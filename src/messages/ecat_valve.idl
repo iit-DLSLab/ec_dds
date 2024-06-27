@@ -1,0 +1,18 @@
+struct ECValveMsg
+{
+	double timestamp;
+	unsigned long index;
+	unsigned long id;
+	double encoderPos;
+	double torque;
+	double pressure1;
+	double pressure2;
+	double temp;
+	double kp;
+	double ki;
+	double kd;
+	double current_ref;
+	double position_ref;
+	double torque_ref;
+	double current_offset;
+};

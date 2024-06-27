@@ -1,0 +1,14 @@
+struct ECValveRefMsg
+{
+	double timestamp;
+	double kp_force;
+	double ki_force;
+	double kd_force;
+	double kp_position;
+	double ki_position;
+	double kd_position;
+	double current_ref;
+	double position_ref;
+	double torque_ref;
+	double current_offset;
+};
