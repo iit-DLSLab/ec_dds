@@ -1,7 +1,7 @@
 #include "utils.hpp"
 
 eprosima::fastrtps::rtps::Locator_t createServerLocator(double domain){
-    const std::string server_ip = "192.168.2.3";
+    const std::string server_ip = "10.240.22.65";
     const int server_port = 56540+domain;
     eprosima::fastrtps::rtps::Locator_t server_locator;
     eprosima::fastrtps::rtps::IPLocator::setIPv4(server_locator, server_ip);

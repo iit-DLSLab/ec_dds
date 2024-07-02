@@ -1,23 +1,9 @@
-// Copyright 2016 Proyectos y Sistemas de Mantenimiento SL (eProsima).
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 /**
- * @file sub_valve_ref.cpp
+ * @file sub_dds.cpp
  *
  */
 
-#include "sub_valve_ref.hpp"
+#include "sub_dds.hpp"
 
 #include "utils.hpp"
 #include <fastrtps/attributes/ParticipantAttributes.h>
@@ -28,23 +14,23 @@
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 
-using namespace eprosima::fastdds::dds;
-
-SubValveRef::SubValveRef()
+template<class MsgType, class Topic>
+SubDDS<MsgType, Topic>::SubDDS(const std::string& topic_name)
     : participant_(nullptr)
     , subscriber_(nullptr)
     , topic_(nullptr)
     , reader_(nullptr)
-    , type_(new ECValveRefMsgPubSubType())
-{
-}
+    , type_(new Topic())
+    , topic_name_(topic_name)
+{}
 
-bool SubValveRef::init(
+template<class MsgType, class Topic>
+bool SubDDS<MsgType, Topic>::init(
         bool use_env)
 {
-    DomainParticipantQos pqos = PARTICIPANT_QOS_DEFAULT;
-    pqos.name("Participant_sub_valve_ref");
-    auto factory = DomainParticipantFactory::get_instance();
+    eprosima::fastdds::dds::DomainParticipantQos pqos = eprosima::fastdds::dds::PARTICIPANT_QOS_DEFAULT;
+    pqos.name("Participant_sub");
+    auto factory = eprosima::fastdds::dds::DomainParticipantFactory::get_instance();
 
     if (use_env)
     {
@@ -67,7 +53,7 @@ bool SubValveRef::init(
     type_.register_type(participant_);
 
     //CREATE THE SUBSCRIBER
-    SubscriberQos sqos = SUBSCRIBER_QOS_DEFAULT;
+    eprosima::fastdds::dds::SubscriberQos sqos = eprosima::fastdds::dds::SUBSCRIBER_QOS_DEFAULT;
 
     if (use_env)
     {
@@ -82,7 +68,7 @@ bool SubValveRef::init(
     }
 
     //CREATE THE TOPIC
-    TopicQos tqos = TOPIC_QOS_DEFAULT;
+    eprosima::fastdds::dds::TopicQos tqos = eprosima::fastdds::dds::TOPIC_QOS_DEFAULT;
 
     if (use_env)
     {
@@ -90,8 +76,8 @@ bool SubValveRef::init(
     }
 
     topic_ = participant_->create_topic(
-        "ec_valve_ref",
-        "ECValveRefMsg",
+        topic_name_, 
+        type_.get_type_name(),
         tqos);
 
     if (topic_ == nullptr)
@@ -100,8 +86,8 @@ bool SubValveRef::init(
     }
 
     // CREATE THE READER
-    DataReaderQos rqos = DATAREADER_QOS_DEFAULT;
-    rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
+    eprosima::fastdds::dds::DataReaderQos rqos = eprosima::fastdds::dds::DATAREADER_QOS_DEFAULT;
+    rqos.reliability().kind = eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS;
 
     if (use_env)
     {
@@ -118,7 +104,8 @@ bool SubValveRef::init(
     return true;
 }
 
-SubValveRef::~SubValveRef()
+template<class MsgType, class Topic>
+SubDDS<MsgType, Topic>::~SubDDS()
 {
     if (reader_ != nullptr)
     {
@@ -132,12 +119,13 @@ SubValveRef::~SubValveRef()
     {
         participant_->delete_subscriber(subscriber_);
     }
-    DomainParticipantFactory::get_instance()->delete_participant(participant_);
+    eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->delete_participant(participant_);
 }
 
-void SubValveRef::SubListener::on_subscription_matched(
-        DataReader*,
-        const SubscriptionMatchedStatus& info)
+template<class MsgType, class Topic>
+void SubDDS<MsgType, Topic>::SubListener::on_subscription_matched(
+        eprosima::fastdds::dds::DataReader*,
+        const eprosima::fastdds::dds::SubscriptionMatchedStatus& info)
 {
     if (info.current_count_change == 1)
     {
@@ -156,33 +144,22 @@ void SubValveRef::SubListener::on_subscription_matched(
     }
 }
 
-void SubValveRef::SubListener::on_data_available(
-        DataReader* reader)
+template<class MsgType, class Topic>
+void SubDDS<MsgType, Topic>::SubListener::on_data_available(
+        eprosima::fastdds::dds::DataReader* reader)
 {
-    SampleInfo info;
-    if (reader->take_next_sample(&data, &info) == ReturnCode_t::RETCODE_OK)
+    eprosima::fastdds::dds::SampleInfo info;
+    if (reader->take_next_sample(&msg, &info) == ReturnCode_t::RETCODE_OK)
     {
-        if (info.instance_state == ALIVE_INSTANCE_STATE)
+        if (info.instance_state == eprosima::fastdds::dds::ALIVE_INSTANCE_STATE)
         {
             samples_++;
-            // Print your structure data here.
         }
     }
 }
 
-void SubValveRef::run()
-{
-    std::cout << "Subscriber running. Please press enter to stop the Subscriber" << std::endl;
-    std::cin.ignore();
-}
-
-void SubValveRef::run(
-        uint32_t number)
-{
-    std::cout << "Subscriber running until " << number << "samples have been received" << std::endl;
-    while (number > listener_.samples_)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
+template<class MsgType, class Topic>
+MsgType SubDDS<MsgType, Topic>::getMsg() const{
+    return listener_.msg;
 }
         

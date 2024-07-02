@@ -1,39 +1,27 @@
-// Copyright 2019 Proyectos y Sistemas de Mantenimiento SL (eProsima).
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 /**
- * @file PubValve.h
+ * @file pub_dds.h
  *
  */
-#ifndef HELLOWORLDPUBLISHER_H_
-#define HELLOWORLDPUBLISHER_H_
-
-
-#include "messages/ecat_valvePubSubTypes.h"
-#include "messages/ecat_valve_refPubSubTypes.h"
+#ifndef PUB_DDS_H
+#define PUB_DDS_H
 
 #include <fastdds/dds/publisher/DataWriterListener.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/dds/domain/DomainParticipant.hpp>
 
-class PubValve
+/*!
+* @brief Class implementing a generic Fast-DDS publisher
+* @tparam MsgType message type associated to the TopicDataType of the message
+* @tparam Topic serialization and deserialization class. It must be of type TopicDataType, which is automatically generated from the idl file
+*/
+template<class MsgType, class Topic>
+class PubDDS
 {
 public:
 
-    PubValve();
+    PubDDS(const std::string& topic_name);
 
-    virtual ~PubValve();
+    virtual ~PubDDS();
 
     //!Initialize
     bool init(
@@ -42,12 +30,7 @@ public:
     //!Publish a sample
     bool publish(bool waitForListener);
 
-    //!Run for number samples
-    void run(
-            uint32_t number,
-            uint32_t sleep);
-
-    ECValveMsg valve_msg;
+    MsgType msg;
 
 private:
 
@@ -85,11 +68,11 @@ private:
     }
     listener_;
 
-    void runThread(
-            uint32_t number,
-            uint32_t sleep);
-
     eprosima::fastdds::dds::TypeSupport type_;
+
+    const std::string topic_name_;
 };
 
-#endif /* HELLOWORLDPUBLISHER_H_ */
+#include "pub_dds.tpp"
+
+#endif /* PUB_DDS_H */

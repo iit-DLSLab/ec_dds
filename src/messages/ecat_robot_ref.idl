@@ -1,0 +1,18 @@
+struct EcatRobotRefMsg
+{
+	// Header
+	string frame_id;
+	unsigned long sequence_id;
+	double timestamp;
+
+	double kp_torque[12];
+	double ki_torque[12];
+	double kd_torque[12];
+	double kp_position[12];
+	double ki_position[12];
+	double kd_position[12];
+	double current_ref[12];
+	double position_ref[12];
+	double torque_ref[12];
+	double current_offset[12];
+};

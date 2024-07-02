@@ -36,17 +36,15 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     endif()
 endif()
 
-file(GLOB DDS_HELLOWORLD_EXAMPLE_SOURCES_CXX "src/messages/ecat*.cxx")
-file(GLOB DDS_HELLOWORLD_EXAMPLE_SOURCES_CPP "src/messages/ecat*.cpp")
-
+file(GLOB DDS_MESSAGE_SOURCES_CXX "src/messages/ecat*.cxx")
+file(GLOB DDS_MESSAGE_SOURCES_CPP "src/messages/ecat*.cpp")
 
 add_executable(${PROJECT_NAME} 
-     	       src/ec_hydraulic_control.cpp 
-               src/pub_valve.cpp
-               src/sub_valve_ref.cpp
+     	       src/ec_hydraulic_control.cpp
                src/utils.cpp
                src/custom_pid.cpp
-               ${DDS_HELLOWORLD_EXAMPLE_SOURCES_CXX} ${DDS_HELLOWORLD_EXAMPLE_SOURCES_CPP})
+               ${DDS_MESSAGE_SOURCES_CXX}
+               ${DDS_MESSAGE_SOURCES_CPP})
 
 target_include_directories(${PROJECT_NAME}
 PUBLIC
