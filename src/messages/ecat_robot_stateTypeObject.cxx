@@ -287,6 +287,44 @@ const TypeObject* GetMinimalEcatRobotStateMsgObject()
     }
     type_object->minimal().struct_type().member_seq().emplace_back(mst_joints_torques);
 
+    MinimalStructMember mst_preassure1;
+    mst_preassure1.common().member_id(memberId++);
+    mst_preassure1.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
+    mst_preassure1.common().member_flags().TRY_CONSTRUCT2(false); // Unsupported
+    mst_preassure1.common().member_flags().IS_EXTERNAL(false); // Unsupported
+    mst_preassure1.common().member_flags().IS_OPTIONAL(false);
+    mst_preassure1.common().member_flags().IS_MUST_UNDERSTAND(false);
+    mst_preassure1.common().member_flags().IS_KEY(false);
+    mst_preassure1.common().member_flags().IS_DEFAULT(false); // Doesn't apply
+    mst_preassure1.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("double", {12}, false));
+
+
+    MD5 preassure1_hash("preassure1");
+    for(int i = 0; i < 4; ++i)
+    {
+        mst_preassure1.detail().name_hash()[i] = preassure1_hash.digest[i];
+    }
+    type_object->minimal().struct_type().member_seq().emplace_back(mst_preassure1);
+
+    MinimalStructMember mst_preassure2;
+    mst_preassure2.common().member_id(memberId++);
+    mst_preassure2.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
+    mst_preassure2.common().member_flags().TRY_CONSTRUCT2(false); // Unsupported
+    mst_preassure2.common().member_flags().IS_EXTERNAL(false); // Unsupported
+    mst_preassure2.common().member_flags().IS_OPTIONAL(false);
+    mst_preassure2.common().member_flags().IS_MUST_UNDERSTAND(false);
+    mst_preassure2.common().member_flags().IS_KEY(false);
+    mst_preassure2.common().member_flags().IS_DEFAULT(false); // Doesn't apply
+    mst_preassure2.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("double", {12}, false));
+
+
+    MD5 preassure2_hash("preassure2");
+    for(int i = 0; i < 4; ++i)
+    {
+        mst_preassure2.detail().name_hash()[i] = preassure2_hash.digest[i];
+    }
+    type_object->minimal().struct_type().member_seq().emplace_back(mst_preassure2);
+
     MinimalStructMember mst_feet_contact;
     mst_feet_contact.common().member_id(memberId++);
     mst_feet_contact.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
@@ -610,6 +648,38 @@ const TypeObject* GetCompleteEcatRobotStateMsgObject()
     cst_joints_torques.detail().name("joints_torques");
 
     type_object->complete().struct_type().member_seq().emplace_back(cst_joints_torques);
+
+    CompleteStructMember cst_preassure1;
+    cst_preassure1.common().member_id(memberId++);
+    cst_preassure1.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
+    cst_preassure1.common().member_flags().TRY_CONSTRUCT2(false); // Unsupported
+    cst_preassure1.common().member_flags().IS_EXTERNAL(false); // Unsupported
+    cst_preassure1.common().member_flags().IS_OPTIONAL(false);
+    cst_preassure1.common().member_flags().IS_MUST_UNDERSTAND(false);
+    cst_preassure1.common().member_flags().IS_KEY(false);
+    cst_preassure1.common().member_flags().IS_DEFAULT(false); // Doesn't apply
+    cst_preassure1.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("double", {12}, true));
+
+
+    cst_preassure1.detail().name("preassure1");
+
+    type_object->complete().struct_type().member_seq().emplace_back(cst_preassure1);
+
+    CompleteStructMember cst_preassure2;
+    cst_preassure2.common().member_id(memberId++);
+    cst_preassure2.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
+    cst_preassure2.common().member_flags().TRY_CONSTRUCT2(false); // Unsupported
+    cst_preassure2.common().member_flags().IS_EXTERNAL(false); // Unsupported
+    cst_preassure2.common().member_flags().IS_OPTIONAL(false);
+    cst_preassure2.common().member_flags().IS_MUST_UNDERSTAND(false);
+    cst_preassure2.common().member_flags().IS_KEY(false);
+    cst_preassure2.common().member_flags().IS_DEFAULT(false); // Doesn't apply
+    cst_preassure2.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("double", {12}, true));
+
+
+    cst_preassure2.detail().name("preassure2");
+
+    type_object->complete().struct_type().member_seq().emplace_back(cst_preassure2);
 
     CompleteStructMember cst_feet_contact;
     cst_feet_contact.common().member_id(memberId++);

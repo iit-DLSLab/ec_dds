@@ -19,3 +19,5 @@ control:
   #pow_id: [201]
   #valve_id: [120]
   #pump_id: [202]
+  current_max: 20 #mA
+  current_offset: [0,0,-1,0,0,-1,0,0,-1,0,0,-1] #mA

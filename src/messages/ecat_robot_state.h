@@ -362,6 +362,56 @@ public:
      */
     eProsima_user_DllExport std::array<double, 12>& joints_torques();
     /*!
+     * @brief This function copies the value in member preassure1
+     * @param _preassure1 New value to be copied in member preassure1
+     */
+    eProsima_user_DllExport void preassure1(
+            const std::array<double, 12>& _preassure1);
+
+    /*!
+     * @brief This function moves the value in member preassure1
+     * @param _preassure1 New value to be moved in member preassure1
+     */
+    eProsima_user_DllExport void preassure1(
+            std::array<double, 12>&& _preassure1);
+
+    /*!
+     * @brief This function returns a constant reference to member preassure1
+     * @return Constant reference to member preassure1
+     */
+    eProsima_user_DllExport const std::array<double, 12>& preassure1() const;
+
+    /*!
+     * @brief This function returns a reference to member preassure1
+     * @return Reference to member preassure1
+     */
+    eProsima_user_DllExport std::array<double, 12>& preassure1();
+    /*!
+     * @brief This function copies the value in member preassure2
+     * @param _preassure2 New value to be copied in member preassure2
+     */
+    eProsima_user_DllExport void preassure2(
+            const std::array<double, 12>& _preassure2);
+
+    /*!
+     * @brief This function moves the value in member preassure2
+     * @param _preassure2 New value to be moved in member preassure2
+     */
+    eProsima_user_DllExport void preassure2(
+            std::array<double, 12>&& _preassure2);
+
+    /*!
+     * @brief This function returns a constant reference to member preassure2
+     * @return Constant reference to member preassure2
+     */
+    eProsima_user_DllExport const std::array<double, 12>& preassure2() const;
+
+    /*!
+     * @brief This function returns a reference to member preassure2
+     * @return Reference to member preassure2
+     */
+    eProsima_user_DllExport std::array<double, 12>& preassure2();
+    /*!
      * @brief This function copies the value in member feet_contact
      * @param _feet_contact New value to be copied in member feet_contact
      */
@@ -581,6 +631,8 @@ private:
     std::array<double, 12> m_joints_velocity;
     std::array<double, 12> m_joints_acceleration;
     std::array<double, 12> m_joints_torques;
+    std::array<double, 12> m_preassure1;
+    std::array<double, 12> m_preassure2;
     std::array<double, 4> m_feet_contact;
     std::array<double, 12> m_feet_position;
     std::array<double, 12> m_current_ref;

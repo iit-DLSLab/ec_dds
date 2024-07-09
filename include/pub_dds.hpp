@@ -28,7 +28,7 @@ public:
             bool use_env);
 
     //!Publish a sample
-    bool publish(bool waitForListener);
+    bool publish(bool waitForListener = false);
 
     MsgType msg;
 

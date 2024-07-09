@@ -35,7 +35,7 @@ using namespace eprosima::fastcdr::exception;
 
 #include <utility>
 
-#define EcatRobotStateMsg_max_cdr_typesize 4648ULL;
+#define EcatRobotStateMsg_max_cdr_typesize 4840ULL;
 #define EcatRobotStateMsg_max_key_cdr_typesize 0ULL;
 
 EcatRobotStateMsg::EcatRobotStateMsg()
@@ -60,6 +60,10 @@ EcatRobotStateMsg::EcatRobotStateMsg()
     memset(&m_joints_acceleration, 0, (12) * 8);
     // double m_joints_torques
     memset(&m_joints_torques, 0, (12) * 8);
+    // double m_preassure1
+    memset(&m_preassure1, 0, (12) * 8);
+    // double m_preassure2
+    memset(&m_preassure2, 0, (12) * 8);
     // double m_feet_contact
     memset(&m_feet_contact, 0, (4) * 8);
     // double m_feet_position
@@ -95,6 +99,8 @@ EcatRobotStateMsg::~EcatRobotStateMsg()
 
 
 
+
+
 }
 
 EcatRobotStateMsg::EcatRobotStateMsg(
@@ -110,6 +116,8 @@ EcatRobotStateMsg::EcatRobotStateMsg(
     m_joints_velocity = x.m_joints_velocity;
     m_joints_acceleration = x.m_joints_acceleration;
     m_joints_torques = x.m_joints_torques;
+    m_preassure1 = x.m_preassure1;
+    m_preassure2 = x.m_preassure2;
     m_feet_contact = x.m_feet_contact;
     m_feet_position = x.m_feet_position;
     m_current_ref = x.m_current_ref;
@@ -131,6 +139,8 @@ EcatRobotStateMsg::EcatRobotStateMsg(
     m_joints_velocity = std::move(x.m_joints_velocity);
     m_joints_acceleration = std::move(x.m_joints_acceleration);
     m_joints_torques = std::move(x.m_joints_torques);
+    m_preassure1 = std::move(x.m_preassure1);
+    m_preassure2 = std::move(x.m_preassure2);
     m_feet_contact = std::move(x.m_feet_contact);
     m_feet_position = std::move(x.m_feet_position);
     m_current_ref = std::move(x.m_current_ref);
@@ -153,6 +163,8 @@ EcatRobotStateMsg& EcatRobotStateMsg::operator =(
     m_joints_velocity = x.m_joints_velocity;
     m_joints_acceleration = x.m_joints_acceleration;
     m_joints_torques = x.m_joints_torques;
+    m_preassure1 = x.m_preassure1;
+    m_preassure2 = x.m_preassure2;
     m_feet_contact = x.m_feet_contact;
     m_feet_position = x.m_feet_position;
     m_current_ref = x.m_current_ref;
@@ -177,6 +189,8 @@ EcatRobotStateMsg& EcatRobotStateMsg::operator =(
     m_joints_velocity = std::move(x.m_joints_velocity);
     m_joints_acceleration = std::move(x.m_joints_acceleration);
     m_joints_torques = std::move(x.m_joints_torques);
+    m_preassure1 = std::move(x.m_preassure1);
+    m_preassure2 = std::move(x.m_preassure2);
     m_feet_contact = std::move(x.m_feet_contact);
     m_feet_position = std::move(x.m_feet_position);
     m_current_ref = std::move(x.m_current_ref);
@@ -191,7 +205,7 @@ bool EcatRobotStateMsg::operator ==(
         const EcatRobotStateMsg& x) const
 {
 
-    return (m_frame_id == x.m_frame_id && m_sequence_id == x.m_sequence_id && m_timestamp == x.m_timestamp && m_robot_name == x.m_robot_name && m_joints_name == x.m_joints_name && m_joints_temperature == x.m_joints_temperature && m_joints_position == x.m_joints_position && m_joints_velocity == x.m_joints_velocity && m_joints_acceleration == x.m_joints_acceleration && m_joints_torques == x.m_joints_torques && m_feet_contact == x.m_feet_contact && m_feet_position == x.m_feet_position && m_current_ref == x.m_current_ref && m_position_ref == x.m_position_ref && m_torque_ref == x.m_torque_ref && m_current_offset == x.m_current_offset);
+    return (m_frame_id == x.m_frame_id && m_sequence_id == x.m_sequence_id && m_timestamp == x.m_timestamp && m_robot_name == x.m_robot_name && m_joints_name == x.m_joints_name && m_joints_temperature == x.m_joints_temperature && m_joints_position == x.m_joints_position && m_joints_velocity == x.m_joints_velocity && m_joints_acceleration == x.m_joints_acceleration && m_joints_torques == x.m_joints_torques && m_preassure1 == x.m_preassure1 && m_preassure2 == x.m_preassure2 && m_feet_contact == x.m_feet_contact && m_feet_position == x.m_feet_position && m_current_ref == x.m_current_ref && m_position_ref == x.m_position_ref && m_torque_ref == x.m_torque_ref && m_current_offset == x.m_current_offset);
 }
 
 bool EcatRobotStateMsg::operator !=(
@@ -231,6 +245,10 @@ size_t EcatRobotStateMsg::getCdrSerializedSize(
             current_alignment += 4 + eprosima::fastcdr::Cdr::alignment(current_alignment, 4) + data.joints_name().at(a).size() + 1;
 
     }
+    current_alignment += ((12) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
+
+    current_alignment += ((12) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
+
     current_alignment += ((12) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
 
     current_alignment += ((12) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
@@ -281,6 +299,10 @@ void EcatRobotStateMsg::serialize(
 
     scdr << m_joints_torques;
 
+    scdr << m_preassure1;
+
+    scdr << m_preassure2;
+
     scdr << m_feet_contact;
 
     scdr << m_feet_position;
@@ -318,6 +340,10 @@ void EcatRobotStateMsg::deserialize(
     dcdr >> m_joints_acceleration;
 
     dcdr >> m_joints_torques;
+
+    dcdr >> m_preassure1;
+
+    dcdr >> m_preassure2;
 
     dcdr >> m_feet_contact;
 
@@ -684,6 +710,80 @@ const std::array<double, 12>& EcatRobotStateMsg::joints_torques() const
 std::array<double, 12>& EcatRobotStateMsg::joints_torques()
 {
     return m_joints_torques;
+}
+/*!
+ * @brief This function copies the value in member preassure1
+ * @param _preassure1 New value to be copied in member preassure1
+ */
+void EcatRobotStateMsg::preassure1(
+        const std::array<double, 12>& _preassure1)
+{
+    m_preassure1 = _preassure1;
+}
+
+/*!
+ * @brief This function moves the value in member preassure1
+ * @param _preassure1 New value to be moved in member preassure1
+ */
+void EcatRobotStateMsg::preassure1(
+        std::array<double, 12>&& _preassure1)
+{
+    m_preassure1 = std::move(_preassure1);
+}
+
+/*!
+ * @brief This function returns a constant reference to member preassure1
+ * @return Constant reference to member preassure1
+ */
+const std::array<double, 12>& EcatRobotStateMsg::preassure1() const
+{
+    return m_preassure1;
+}
+
+/*!
+ * @brief This function returns a reference to member preassure1
+ * @return Reference to member preassure1
+ */
+std::array<double, 12>& EcatRobotStateMsg::preassure1()
+{
+    return m_preassure1;
+}
+/*!
+ * @brief This function copies the value in member preassure2
+ * @param _preassure2 New value to be copied in member preassure2
+ */
+void EcatRobotStateMsg::preassure2(
+        const std::array<double, 12>& _preassure2)
+{
+    m_preassure2 = _preassure2;
+}
+
+/*!
+ * @brief This function moves the value in member preassure2
+ * @param _preassure2 New value to be moved in member preassure2
+ */
+void EcatRobotStateMsg::preassure2(
+        std::array<double, 12>&& _preassure2)
+{
+    m_preassure2 = std::move(_preassure2);
+}
+
+/*!
+ * @brief This function returns a constant reference to member preassure2
+ * @return Constant reference to member preassure2
+ */
+const std::array<double, 12>& EcatRobotStateMsg::preassure2() const
+{
+    return m_preassure2;
+}
+
+/*!
+ * @brief This function returns a reference to member preassure2
+ * @return Reference to member preassure2
+ */
+std::array<double, 12>& EcatRobotStateMsg::preassure2()
+{
+    return m_preassure2;
 }
 /*!
  * @brief This function copies the value in member feet_contact

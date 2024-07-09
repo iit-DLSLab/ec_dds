@@ -14,12 +14,12 @@ struct EcatRobotStateMsg
 	double joints_velocity[12];
 	double joints_acceleration[12];
 	double joints_torques[12];
+	double preassure1[12];
+	double preassure2[12];
 
 	double feet_contact[4];
 	double feet_position[12];
 
-	double preassure1[4];
-	double preassure2[4];
 
 	// Saving desired reference for debugging
 	double current_ref[12];
