@@ -51,7 +51,7 @@ int main(int argc, char * const argv[])
     bool sys_ctrl=true;
     try{
         ec_common_step.autodetection();
-        // sys_ctrl=ec_common_step.start_ec_motors();
+        sys_ctrl=ec_common_step.start_ec_motors();
         sys_ctrl &= ec_common_step.start_ec_valves();
     }catch(std::exception &ex){
         DPRINTF("%s\n",ex.what());
@@ -83,6 +83,12 @@ int main(int argc, char * const argv[])
 	        std::array<double, 12> joints_temperature{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 	        std::array<double, 12> preassure1{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}; // preassures are only for hydraulic actuators
 	        std::array<double, 12> preassure2{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}; // preassures are only for hydraulic actuators
+            std::array<uint32_t, 12> fault,rtt,op_idx_ack; // only for electric motors
+            std::array<uint32_t, 12> cmd_aux_sts,brake_sts,led_sts; // only for electric motors
+            std::array<double,12> link_pos; // only for electric motors
+            std::array<double,12> link_vel; // only for electric motors
+            std::array<double,12> board_temp; // only for electric motors
+            std::array<double,12> aux; // only for electric motors
         } state;
         struct RobotRef{ // desired robot state
             std::array<double, 12> kp_torque{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
@@ -116,15 +122,38 @@ int main(int argc, char * const argv[])
         MotorReferenceMap motors_ref;
         client->get_motors_status(motors_status_map);
 
+        // --- initialize motor references
+        for ( const auto &[esc_id, rx_pdo] : motors_status_map){
+            motors_ref[esc_id]=std::make_tuple(ec_cfg.motor_config_map[esc_id].control_mode_type, //ctrl_type
+                                                0.0, //pos_ref
+                                                0.0, //vel_ref
+                                                0.0, //tor_ref
+                                                ec_cfg.motor_config_map[esc_id].gains[0], //gain_1
+                                                ec_cfg.motor_config_map[esc_id].gains[1], //gain_2
+                                                ec_cfg.motor_config_map[esc_id].gains[2], //gain_3
+                                                ec_cfg.motor_config_map[esc_id].gains[3], //gain_4
+                                                ec_cfg.motor_config_map[esc_id].gains[4], //gain_5
+                                                1, // op means NO_OP
+                                                0, // idx
+                                                0  // aux
+                                                );
+        }
+        if(motors_ref.empty()){
+            throw std::runtime_error("fatal error: motors reference is empty");
+        }
+
         // -- Hydraulic motors
         ValveStatusMap valves_status_map;
         ValveReferenceMap valves_ref;
         client->get_valve_status(valves_status_map);
         // --- initialize valve references
-        for ( const auto &[esc_id, valve_rx_pdo] : valves_status_map){
+        for ( const auto &[esc_id, rx_pdo] : valves_status_map){
             valves_ref[esc_id] = std::make_tuple(0,0,0,0,0,0,0,0);
         }
-
+        if(valves_ref.empty()){
+            throw std::runtime_error("fatal error: valves reference is empty");
+        }
+        
         // -- PID
         std::array<CustomPID, 12> pid_torque;  // these are forces in case of hydraulic actuation
         for(auto &pid : pid_torque){
@@ -176,6 +205,31 @@ int main(int argc, char * const argv[])
             //DPRINTF("Time [%f]\n",time_elapsed_ms);
             // Read robot state
             // -- motors
+            client->get_motors_status(motors_status_map);
+            for ( const auto &[ecat_id, rx_pdo] : motors_status_map){
+                hal_id = ecat_to_hal_id[ecat_id];
+                try {
+                    std::tie(state.link_pos[hal_id],
+                    state.joints_position[hal_id],
+                    state.link_vel[hal_id],
+                    state.joints_velocity[hal_id],
+                    state.joints_torques[hal_id],
+                    state.joints_temperature[hal_id],
+                    state.board_temp[hal_id],
+                    state.fault[hal_id],
+                    state.rtt[hal_id],
+                    state.op_idx_ack[hal_id],
+                    state.aux[hal_id],
+                    state.cmd_aux_sts[hal_id]) = rx_pdo;  
+                    
+                    // PRINT OUT Brakes and LED get_motors_status @ NOTE To be tested.         
+                    state.brake_sts[hal_id] = state.cmd_aux_sts[hal_id] & 3; //00 unknown
+                                                //01 release brake 
+                                                //10 enganged brake  
+                                                //11 error
+                    state.led_sts[hal_id]= (state.cmd_aux_sts[hal_id] & 4)/4; // 1 or 0 LED  ON/OFF
+                } catch (std::out_of_range oor) {}
+            }
             // -- valves
             client->get_valve_status(valves_status_map);
             for ( const auto &[ecat_id, rx_pdo] : valves_status_map){
@@ -190,22 +244,19 @@ int main(int argc, char * const argv[])
 
             // Get references
             ref_msg = sub_dds.getMsg();
-            // -- motors
-            // -- valves
-            for ( const auto &[ecat_id, rx_pdo] : valves_status_map){
-                hal_id = ecat_to_hal_id[ecat_id]; 
-                ref.position[hal_id] = ref_msg.position_ref()[hal_id];
-                ref.torque[hal_id] = ref_msg.torque_ref()[hal_id];
-                ref.current_offset[hal_id] = ref_msg.current_offset()[hal_id];
+            for ( int i=0; i<ref.position.size();i++){
+                ref.position[i] = ref_msg.position_ref()[i];
+                ref.torque[i] = ref_msg.torque_ref()[i];
+                ref.current_offset[i] = ref_msg.current_offset()[i];
                 // Set PID gains
-                pid_torque[hal_id].setGains(ref_msg.kp_torque()[hal_id], ref_msg.ki_torque()[hal_id], ref_msg.kd_torque()[hal_id]);
-                pid_position[hal_id].setGains(ref_msg.kp_position()[hal_id], ref_msg.ki_position()[hal_id], ref_msg.kd_position()[hal_id]);
+                pid_torque[i].setGains(ref_msg.kp_torque()[i], ref_msg.ki_torque()[i], ref_msg.kd_torque()[i]);
+                pid_position[i].setGains(ref_msg.kp_position()[i], ref_msg.ki_position()[i], ref_msg.kd_position()[i]);
             }
 
             // Joint PID control
             for(int i = 0; i< slaves_curr_ref.size(); i++){
-                slaves_curr_ref[i] =     pid_position[i].run(ref.position[i], state.joints_position[i]);
-                                    +   pid_torque[i].run(ref.torque[i], state.joints_torques[i]);
+                slaves_curr_ref[i] =     pid_position[i].run(ref.position[i], state.joints_position[i])
+                                    +   pid_torque[i].run(ref.torque[i], state.joints_torques[i])
                                     +   current_offset[i];
 
                 // saturate output
@@ -218,6 +269,12 @@ int main(int argc, char * const argv[])
             }
 
             // Send desired current to slaves
+            // -- motors (for now controlling in position)
+            for ( auto &[ecat_id, rx_pdo] : motors_ref){
+                std::get<1>(rx_pdo) = ref.position[ecat_to_hal_id[ecat_id]];
+            }
+            client->set_motors_references(RefFlags::FLAG_MULTI_REF, motors_ref);
+            // -- valves
             for ( auto &[ecat_id, rx_pdo] : valves_ref){
                 std::get<0>(rx_pdo) = slaves_curr_ref[ecat_to_hal_id[ecat_id]];
             }
