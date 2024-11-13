@@ -1,0 +1,8 @@
+struct NetStatMsg
+{
+	double delta_timestamp;
+	unsigned long missed_packages_tot;
+	unsigned long missed_packages_curr;
+	unsigned long sequence_id_curr;
+	unsigned long sequence_id_prec;
+};

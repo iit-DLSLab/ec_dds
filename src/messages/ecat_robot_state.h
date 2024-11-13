@@ -412,6 +412,56 @@ public:
      */
     eProsima_user_DllExport std::array<double, 12>& preassure2();
     /*!
+     * @brief This function copies the value in member joints_torques_from_current
+     * @param _joints_torques_from_current New value to be copied in member joints_torques_from_current
+     */
+    eProsima_user_DllExport void joints_torques_from_current(
+            const std::array<double, 12>& _joints_torques_from_current);
+
+    /*!
+     * @brief This function moves the value in member joints_torques_from_current
+     * @param _joints_torques_from_current New value to be moved in member joints_torques_from_current
+     */
+    eProsima_user_DllExport void joints_torques_from_current(
+            std::array<double, 12>&& _joints_torques_from_current);
+
+    /*!
+     * @brief This function returns a constant reference to member joints_torques_from_current
+     * @return Constant reference to member joints_torques_from_current
+     */
+    eProsima_user_DllExport const std::array<double, 12>& joints_torques_from_current() const;
+
+    /*!
+     * @brief This function returns a reference to member joints_torques_from_current
+     * @return Reference to member joints_torques_from_current
+     */
+    eProsima_user_DllExport std::array<double, 12>& joints_torques_from_current();
+    /*!
+     * @brief This function copies the value in member motors_current
+     * @param _motors_current New value to be copied in member motors_current
+     */
+    eProsima_user_DllExport void motors_current(
+            const std::array<double, 12>& _motors_current);
+
+    /*!
+     * @brief This function moves the value in member motors_current
+     * @param _motors_current New value to be moved in member motors_current
+     */
+    eProsima_user_DllExport void motors_current(
+            std::array<double, 12>&& _motors_current);
+
+    /*!
+     * @brief This function returns a constant reference to member motors_current
+     * @return Constant reference to member motors_current
+     */
+    eProsima_user_DllExport const std::array<double, 12>& motors_current() const;
+
+    /*!
+     * @brief This function returns a reference to member motors_current
+     * @return Reference to member motors_current
+     */
+    eProsima_user_DllExport std::array<double, 12>& motors_current();
+    /*!
      * @brief This function copies the value in member feet_contact
      * @param _feet_contact New value to be copied in member feet_contact
      */
@@ -561,6 +611,56 @@ public:
      * @return Reference to member current_offset
      */
     eProsima_user_DllExport std::array<double, 12>& current_offset();
+    /*!
+     * @brief This function copies the value in member torque_scale_factor
+     * @param _torque_scale_factor New value to be copied in member torque_scale_factor
+     */
+    eProsima_user_DllExport void torque_scale_factor(
+            const std::array<double, 12>& _torque_scale_factor);
+
+    /*!
+     * @brief This function moves the value in member torque_scale_factor
+     * @param _torque_scale_factor New value to be moved in member torque_scale_factor
+     */
+    eProsima_user_DllExport void torque_scale_factor(
+            std::array<double, 12>&& _torque_scale_factor);
+
+    /*!
+     * @brief This function returns a constant reference to member torque_scale_factor
+     * @return Constant reference to member torque_scale_factor
+     */
+    eProsima_user_DllExport const std::array<double, 12>& torque_scale_factor() const;
+
+    /*!
+     * @brief This function returns a reference to member torque_scale_factor
+     * @return Reference to member torque_scale_factor
+     */
+    eProsima_user_DllExport std::array<double, 12>& torque_scale_factor();
+    /*!
+     * @brief This function copies the value in member chirp_freq
+     * @param _chirp_freq New value to be copied in member chirp_freq
+     */
+    eProsima_user_DllExport void chirp_freq(
+            const std::array<double, 12>& _chirp_freq);
+
+    /*!
+     * @brief This function moves the value in member chirp_freq
+     * @param _chirp_freq New value to be moved in member chirp_freq
+     */
+    eProsima_user_DllExport void chirp_freq(
+            std::array<double, 12>&& _chirp_freq);
+
+    /*!
+     * @brief This function returns a constant reference to member chirp_freq
+     * @return Constant reference to member chirp_freq
+     */
+    eProsima_user_DllExport const std::array<double, 12>& chirp_freq() const;
+
+    /*!
+     * @brief This function returns a reference to member chirp_freq
+     * @return Reference to member chirp_freq
+     */
+    eProsima_user_DllExport std::array<double, 12>& chirp_freq();
 
     /*!
     * @brief This function returns the maximum serialized size of an object
@@ -633,12 +733,16 @@ private:
     std::array<double, 12> m_joints_torques;
     std::array<double, 12> m_preassure1;
     std::array<double, 12> m_preassure2;
+    std::array<double, 12> m_joints_torques_from_current;
+    std::array<double, 12> m_motors_current;
     std::array<double, 4> m_feet_contact;
     std::array<double, 12> m_feet_position;
     std::array<double, 12> m_current_ref;
     std::array<double, 12> m_position_ref;
     std::array<double, 12> m_torque_ref;
     std::array<double, 12> m_current_offset;
+    std::array<double, 12> m_torque_scale_factor;
+    std::array<double, 12> m_chirp_freq;
 
 };
 

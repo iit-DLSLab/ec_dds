@@ -14,6 +14,8 @@
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 
+#include <fastdds/rtps/transport/UDPv4TransportDescriptor.h>
+
 template<class MsgType, class Topic>
 SubDDS<MsgType, Topic>::SubDDS(const std::string& topic_name)
     : participant_(nullptr)
@@ -40,6 +42,15 @@ bool SubDDS<MsgType, Topic>::init(
 
     configureParticipantAsClient(3, pqos); //3: signal domain
     pqos.wire_protocol().builtin.typelookup_config.use_server = true;	
+
+    // auto udp_transport = std::make_shared<eprosima::fastdds::rtps::UDPv4TransportDescriptor>();
+
+    // auto default_reception_threads = udp_transport->default_reception_threads();
+    // udp_transport->default_reception_threads(   eprosima::fastdds::rtps::ThreadSettings{1, 0, //SCHED_FIFO, highest priority
+    //                                             default_reception_threads.affinity,
+    //                                             default_reception_threads.stack_size});
+    // pqos.transport().user_transports.push_back(udp_transport);
+
     participant_ = factory->create_participant(0, pqos);
 
     if (participant_ == nullptr)

@@ -12,6 +12,10 @@ public:
     double run(double demand, double feedback, double demand_ff = 0.0);
 
     void setGains(double kp, double ki, double kd);
+
+    double getKp();
+    double getKi();
+    double getKd();
 private:
     double kp;
     double ki;

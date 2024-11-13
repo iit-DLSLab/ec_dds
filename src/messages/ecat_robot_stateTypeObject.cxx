@@ -325,6 +325,44 @@ const TypeObject* GetMinimalEcatRobotStateMsgObject()
     }
     type_object->minimal().struct_type().member_seq().emplace_back(mst_preassure2);
 
+    MinimalStructMember mst_joints_torques_from_current;
+    mst_joints_torques_from_current.common().member_id(memberId++);
+    mst_joints_torques_from_current.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
+    mst_joints_torques_from_current.common().member_flags().TRY_CONSTRUCT2(false); // Unsupported
+    mst_joints_torques_from_current.common().member_flags().IS_EXTERNAL(false); // Unsupported
+    mst_joints_torques_from_current.common().member_flags().IS_OPTIONAL(false);
+    mst_joints_torques_from_current.common().member_flags().IS_MUST_UNDERSTAND(false);
+    mst_joints_torques_from_current.common().member_flags().IS_KEY(false);
+    mst_joints_torques_from_current.common().member_flags().IS_DEFAULT(false); // Doesn't apply
+    mst_joints_torques_from_current.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("double", {12}, false));
+
+
+    MD5 joints_torques_from_current_hash("joints_torques_from_current");
+    for(int i = 0; i < 4; ++i)
+    {
+        mst_joints_torques_from_current.detail().name_hash()[i] = joints_torques_from_current_hash.digest[i];
+    }
+    type_object->minimal().struct_type().member_seq().emplace_back(mst_joints_torques_from_current);
+
+    MinimalStructMember mst_motors_current;
+    mst_motors_current.common().member_id(memberId++);
+    mst_motors_current.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
+    mst_motors_current.common().member_flags().TRY_CONSTRUCT2(false); // Unsupported
+    mst_motors_current.common().member_flags().IS_EXTERNAL(false); // Unsupported
+    mst_motors_current.common().member_flags().IS_OPTIONAL(false);
+    mst_motors_current.common().member_flags().IS_MUST_UNDERSTAND(false);
+    mst_motors_current.common().member_flags().IS_KEY(false);
+    mst_motors_current.common().member_flags().IS_DEFAULT(false); // Doesn't apply
+    mst_motors_current.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("double", {12}, false));
+
+
+    MD5 motors_current_hash("motors_current");
+    for(int i = 0; i < 4; ++i)
+    {
+        mst_motors_current.detail().name_hash()[i] = motors_current_hash.digest[i];
+    }
+    type_object->minimal().struct_type().member_seq().emplace_back(mst_motors_current);
+
     MinimalStructMember mst_feet_contact;
     mst_feet_contact.common().member_id(memberId++);
     mst_feet_contact.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
@@ -438,6 +476,44 @@ const TypeObject* GetMinimalEcatRobotStateMsgObject()
         mst_current_offset.detail().name_hash()[i] = current_offset_hash.digest[i];
     }
     type_object->minimal().struct_type().member_seq().emplace_back(mst_current_offset);
+
+    MinimalStructMember mst_torque_scale_factor;
+    mst_torque_scale_factor.common().member_id(memberId++);
+    mst_torque_scale_factor.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
+    mst_torque_scale_factor.common().member_flags().TRY_CONSTRUCT2(false); // Unsupported
+    mst_torque_scale_factor.common().member_flags().IS_EXTERNAL(false); // Unsupported
+    mst_torque_scale_factor.common().member_flags().IS_OPTIONAL(false);
+    mst_torque_scale_factor.common().member_flags().IS_MUST_UNDERSTAND(false);
+    mst_torque_scale_factor.common().member_flags().IS_KEY(false);
+    mst_torque_scale_factor.common().member_flags().IS_DEFAULT(false); // Doesn't apply
+    mst_torque_scale_factor.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("double", {12}, false));
+
+
+    MD5 torque_scale_factor_hash("torque_scale_factor");
+    for(int i = 0; i < 4; ++i)
+    {
+        mst_torque_scale_factor.detail().name_hash()[i] = torque_scale_factor_hash.digest[i];
+    }
+    type_object->minimal().struct_type().member_seq().emplace_back(mst_torque_scale_factor);
+
+    MinimalStructMember mst_chirp_freq;
+    mst_chirp_freq.common().member_id(memberId++);
+    mst_chirp_freq.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
+    mst_chirp_freq.common().member_flags().TRY_CONSTRUCT2(false); // Unsupported
+    mst_chirp_freq.common().member_flags().IS_EXTERNAL(false); // Unsupported
+    mst_chirp_freq.common().member_flags().IS_OPTIONAL(false);
+    mst_chirp_freq.common().member_flags().IS_MUST_UNDERSTAND(false);
+    mst_chirp_freq.common().member_flags().IS_KEY(false);
+    mst_chirp_freq.common().member_flags().IS_DEFAULT(false); // Doesn't apply
+    mst_chirp_freq.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("double", {12}, false));
+
+
+    MD5 chirp_freq_hash("chirp_freq");
+    for(int i = 0; i < 4; ++i)
+    {
+        mst_chirp_freq.detail().name_hash()[i] = chirp_freq_hash.digest[i];
+    }
+    type_object->minimal().struct_type().member_seq().emplace_back(mst_chirp_freq);
 
 
     // Header
@@ -681,6 +757,38 @@ const TypeObject* GetCompleteEcatRobotStateMsgObject()
 
     type_object->complete().struct_type().member_seq().emplace_back(cst_preassure2);
 
+    CompleteStructMember cst_joints_torques_from_current;
+    cst_joints_torques_from_current.common().member_id(memberId++);
+    cst_joints_torques_from_current.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
+    cst_joints_torques_from_current.common().member_flags().TRY_CONSTRUCT2(false); // Unsupported
+    cst_joints_torques_from_current.common().member_flags().IS_EXTERNAL(false); // Unsupported
+    cst_joints_torques_from_current.common().member_flags().IS_OPTIONAL(false);
+    cst_joints_torques_from_current.common().member_flags().IS_MUST_UNDERSTAND(false);
+    cst_joints_torques_from_current.common().member_flags().IS_KEY(false);
+    cst_joints_torques_from_current.common().member_flags().IS_DEFAULT(false); // Doesn't apply
+    cst_joints_torques_from_current.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("double", {12}, true));
+
+
+    cst_joints_torques_from_current.detail().name("joints_torques_from_current");
+
+    type_object->complete().struct_type().member_seq().emplace_back(cst_joints_torques_from_current);
+
+    CompleteStructMember cst_motors_current;
+    cst_motors_current.common().member_id(memberId++);
+    cst_motors_current.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
+    cst_motors_current.common().member_flags().TRY_CONSTRUCT2(false); // Unsupported
+    cst_motors_current.common().member_flags().IS_EXTERNAL(false); // Unsupported
+    cst_motors_current.common().member_flags().IS_OPTIONAL(false);
+    cst_motors_current.common().member_flags().IS_MUST_UNDERSTAND(false);
+    cst_motors_current.common().member_flags().IS_KEY(false);
+    cst_motors_current.common().member_flags().IS_DEFAULT(false); // Doesn't apply
+    cst_motors_current.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("double", {12}, true));
+
+
+    cst_motors_current.detail().name("motors_current");
+
+    type_object->complete().struct_type().member_seq().emplace_back(cst_motors_current);
+
     CompleteStructMember cst_feet_contact;
     cst_feet_contact.common().member_id(memberId++);
     cst_feet_contact.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
@@ -776,6 +884,38 @@ const TypeObject* GetCompleteEcatRobotStateMsgObject()
     cst_current_offset.detail().name("current_offset");
 
     type_object->complete().struct_type().member_seq().emplace_back(cst_current_offset);
+
+    CompleteStructMember cst_torque_scale_factor;
+    cst_torque_scale_factor.common().member_id(memberId++);
+    cst_torque_scale_factor.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
+    cst_torque_scale_factor.common().member_flags().TRY_CONSTRUCT2(false); // Unsupported
+    cst_torque_scale_factor.common().member_flags().IS_EXTERNAL(false); // Unsupported
+    cst_torque_scale_factor.common().member_flags().IS_OPTIONAL(false);
+    cst_torque_scale_factor.common().member_flags().IS_MUST_UNDERSTAND(false);
+    cst_torque_scale_factor.common().member_flags().IS_KEY(false);
+    cst_torque_scale_factor.common().member_flags().IS_DEFAULT(false); // Doesn't apply
+    cst_torque_scale_factor.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("double", {12}, true));
+
+
+    cst_torque_scale_factor.detail().name("torque_scale_factor");
+
+    type_object->complete().struct_type().member_seq().emplace_back(cst_torque_scale_factor);
+
+    CompleteStructMember cst_chirp_freq;
+    cst_chirp_freq.common().member_id(memberId++);
+    cst_chirp_freq.common().member_flags().TRY_CONSTRUCT1(false); // Unsupported
+    cst_chirp_freq.common().member_flags().TRY_CONSTRUCT2(false); // Unsupported
+    cst_chirp_freq.common().member_flags().IS_EXTERNAL(false); // Unsupported
+    cst_chirp_freq.common().member_flags().IS_OPTIONAL(false);
+    cst_chirp_freq.common().member_flags().IS_MUST_UNDERSTAND(false);
+    cst_chirp_freq.common().member_flags().IS_KEY(false);
+    cst_chirp_freq.common().member_flags().IS_DEFAULT(false); // Doesn't apply
+    cst_chirp_freq.common().member_type_id(*TypeObjectFactory::get_instance()->get_array_identifier("double", {12}, true));
+
+
+    cst_chirp_freq.detail().name("chirp_freq");
+
+    type_object->complete().struct_type().member_seq().emplace_back(cst_chirp_freq);
 
 
     // Header

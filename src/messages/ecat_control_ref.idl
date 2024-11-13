@@ -1,0 +1,28 @@
+struct EcatControlRefMsg
+{
+	// Header
+	string frame_id;
+	unsigned long sequence_id;
+	double timestamp;
+
+	// Trajectory data
+	double amplitude[12];
+	double frequency[12];
+	double offset[12];
+	string traj_type[12];
+	string traj_mode[12];
+	boolean start_traj[12];
+	double max_freq[12];
+
+	// scaling factor for the torque estimated by the current
+	double torque_scale_factor[12];
+
+	// Gains
+	double kp_torque[12];
+	double ki_torque[12];
+	double kd_torque[12];
+	double kp_position[12];
+	double ki_position[12];
+	double kd_position[12];
+	double current_offset[12];
+};

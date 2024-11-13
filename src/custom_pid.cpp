@@ -39,7 +39,7 @@ double CustomPID::run(double demand, double feedback, double demand_ff){
     error_d = (error_p - error_p_old) * (1.0 / dt);
     error_p_old = error_p;
     error_i = error_i + error_p * dt;
-    // limitOutput(error_i, error_i_limit);
+    limitOutput(error_i, error_i_limit);
 
     // Compute Outputs
     output_kp = kp * error_p;
@@ -80,3 +80,7 @@ void CustomPID::setGains(double kp, double ki, double kd){
     this->ki = ki;
     this->kd = kd;
 }
+
+double CustomPID::getKp(){return kp;}
+double CustomPID::getKi(){return ki;}
+double CustomPID::getKd(){return kd;}

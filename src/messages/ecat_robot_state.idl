@@ -16,6 +16,8 @@ struct EcatRobotStateMsg
 	double joints_torques[12];
 	double preassure1[12];
 	double preassure2[12];
+	double joints_torques_from_current[12];
+	double motors_current[12];
 
 	double feet_contact[4];
 	double feet_position[12];
@@ -26,4 +28,9 @@ struct EcatRobotStateMsg
 	double position_ref[12];
 	double torque_ref[12];
 	double current_offset[12];
+	
+	// scaling factor for the torque estimated by the current
+	double torque_scale_factor[12];
+
+	double chirp_freq[12];
 };

@@ -35,7 +35,7 @@ using namespace eprosima::fastcdr::exception;
 
 #include <utility>
 
-#define EcatRobotStateMsg_max_cdr_typesize 4840ULL;
+#define EcatRobotStateMsg_max_cdr_typesize 5224ULL;
 #define EcatRobotStateMsg_max_key_cdr_typesize 0ULL;
 
 EcatRobotStateMsg::EcatRobotStateMsg()
@@ -64,6 +64,10 @@ EcatRobotStateMsg::EcatRobotStateMsg()
     memset(&m_preassure1, 0, (12) * 8);
     // double m_preassure2
     memset(&m_preassure2, 0, (12) * 8);
+    // double m_joints_torques_from_current
+    memset(&m_joints_torques_from_current, 0, (12) * 8);
+    // double m_motors_current
+    memset(&m_motors_current, 0, (12) * 8);
     // double m_feet_contact
     memset(&m_feet_contact, 0, (4) * 8);
     // double m_feet_position
@@ -76,6 +80,10 @@ EcatRobotStateMsg::EcatRobotStateMsg()
     memset(&m_torque_ref, 0, (12) * 8);
     // double m_current_offset
     memset(&m_current_offset, 0, (12) * 8);
+    // double m_torque_scale_factor
+    memset(&m_torque_scale_factor, 0, (12) * 8);
+    // double m_chirp_freq
+    memset(&m_chirp_freq, 0, (12) * 8);
 
     // Just to register all known types
     registerecat_robot_stateTypes();
@@ -101,6 +109,10 @@ EcatRobotStateMsg::~EcatRobotStateMsg()
 
 
 
+
+
+
+
 }
 
 EcatRobotStateMsg::EcatRobotStateMsg(
@@ -118,12 +130,16 @@ EcatRobotStateMsg::EcatRobotStateMsg(
     m_joints_torques = x.m_joints_torques;
     m_preassure1 = x.m_preassure1;
     m_preassure2 = x.m_preassure2;
+    m_joints_torques_from_current = x.m_joints_torques_from_current;
+    m_motors_current = x.m_motors_current;
     m_feet_contact = x.m_feet_contact;
     m_feet_position = x.m_feet_position;
     m_current_ref = x.m_current_ref;
     m_position_ref = x.m_position_ref;
     m_torque_ref = x.m_torque_ref;
     m_current_offset = x.m_current_offset;
+    m_torque_scale_factor = x.m_torque_scale_factor;
+    m_chirp_freq = x.m_chirp_freq;
 }
 
 EcatRobotStateMsg::EcatRobotStateMsg(
@@ -141,12 +157,16 @@ EcatRobotStateMsg::EcatRobotStateMsg(
     m_joints_torques = std::move(x.m_joints_torques);
     m_preassure1 = std::move(x.m_preassure1);
     m_preassure2 = std::move(x.m_preassure2);
+    m_joints_torques_from_current = std::move(x.m_joints_torques_from_current);
+    m_motors_current = std::move(x.m_motors_current);
     m_feet_contact = std::move(x.m_feet_contact);
     m_feet_position = std::move(x.m_feet_position);
     m_current_ref = std::move(x.m_current_ref);
     m_position_ref = std::move(x.m_position_ref);
     m_torque_ref = std::move(x.m_torque_ref);
     m_current_offset = std::move(x.m_current_offset);
+    m_torque_scale_factor = std::move(x.m_torque_scale_factor);
+    m_chirp_freq = std::move(x.m_chirp_freq);
 }
 
 EcatRobotStateMsg& EcatRobotStateMsg::operator =(
@@ -165,12 +185,16 @@ EcatRobotStateMsg& EcatRobotStateMsg::operator =(
     m_joints_torques = x.m_joints_torques;
     m_preassure1 = x.m_preassure1;
     m_preassure2 = x.m_preassure2;
+    m_joints_torques_from_current = x.m_joints_torques_from_current;
+    m_motors_current = x.m_motors_current;
     m_feet_contact = x.m_feet_contact;
     m_feet_position = x.m_feet_position;
     m_current_ref = x.m_current_ref;
     m_position_ref = x.m_position_ref;
     m_torque_ref = x.m_torque_ref;
     m_current_offset = x.m_current_offset;
+    m_torque_scale_factor = x.m_torque_scale_factor;
+    m_chirp_freq = x.m_chirp_freq;
 
     return *this;
 }
@@ -191,12 +215,16 @@ EcatRobotStateMsg& EcatRobotStateMsg::operator =(
     m_joints_torques = std::move(x.m_joints_torques);
     m_preassure1 = std::move(x.m_preassure1);
     m_preassure2 = std::move(x.m_preassure2);
+    m_joints_torques_from_current = std::move(x.m_joints_torques_from_current);
+    m_motors_current = std::move(x.m_motors_current);
     m_feet_contact = std::move(x.m_feet_contact);
     m_feet_position = std::move(x.m_feet_position);
     m_current_ref = std::move(x.m_current_ref);
     m_position_ref = std::move(x.m_position_ref);
     m_torque_ref = std::move(x.m_torque_ref);
     m_current_offset = std::move(x.m_current_offset);
+    m_torque_scale_factor = std::move(x.m_torque_scale_factor);
+    m_chirp_freq = std::move(x.m_chirp_freq);
 
     return *this;
 }
@@ -205,7 +233,7 @@ bool EcatRobotStateMsg::operator ==(
         const EcatRobotStateMsg& x) const
 {
 
-    return (m_frame_id == x.m_frame_id && m_sequence_id == x.m_sequence_id && m_timestamp == x.m_timestamp && m_robot_name == x.m_robot_name && m_joints_name == x.m_joints_name && m_joints_temperature == x.m_joints_temperature && m_joints_position == x.m_joints_position && m_joints_velocity == x.m_joints_velocity && m_joints_acceleration == x.m_joints_acceleration && m_joints_torques == x.m_joints_torques && m_preassure1 == x.m_preassure1 && m_preassure2 == x.m_preassure2 && m_feet_contact == x.m_feet_contact && m_feet_position == x.m_feet_position && m_current_ref == x.m_current_ref && m_position_ref == x.m_position_ref && m_torque_ref == x.m_torque_ref && m_current_offset == x.m_current_offset);
+    return (m_frame_id == x.m_frame_id && m_sequence_id == x.m_sequence_id && m_timestamp == x.m_timestamp && m_robot_name == x.m_robot_name && m_joints_name == x.m_joints_name && m_joints_temperature == x.m_joints_temperature && m_joints_position == x.m_joints_position && m_joints_velocity == x.m_joints_velocity && m_joints_acceleration == x.m_joints_acceleration && m_joints_torques == x.m_joints_torques && m_preassure1 == x.m_preassure1 && m_preassure2 == x.m_preassure2 && m_joints_torques_from_current == x.m_joints_torques_from_current && m_motors_current == x.m_motors_current && m_feet_contact == x.m_feet_contact && m_feet_position == x.m_feet_position && m_current_ref == x.m_current_ref && m_position_ref == x.m_position_ref && m_torque_ref == x.m_torque_ref && m_current_offset == x.m_current_offset && m_torque_scale_factor == x.m_torque_scale_factor && m_chirp_freq == x.m_chirp_freq);
 }
 
 bool EcatRobotStateMsg::operator !=(
@@ -259,7 +287,15 @@ size_t EcatRobotStateMsg::getCdrSerializedSize(
 
     current_alignment += ((12) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
 
+    current_alignment += ((12) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
+
+    current_alignment += ((12) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
+
     current_alignment += ((4) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
+
+    current_alignment += ((12) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
+
+    current_alignment += ((12) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
 
     current_alignment += ((12) * 8) + eprosima::fastcdr::Cdr::alignment(current_alignment, 8);
 
@@ -303,6 +339,10 @@ void EcatRobotStateMsg::serialize(
 
     scdr << m_preassure2;
 
+    scdr << m_joints_torques_from_current;
+
+    scdr << m_motors_current;
+
     scdr << m_feet_contact;
 
     scdr << m_feet_position;
@@ -314,6 +354,10 @@ void EcatRobotStateMsg::serialize(
     scdr << m_torque_ref;
 
     scdr << m_current_offset;
+
+    scdr << m_torque_scale_factor;
+
+    scdr << m_chirp_freq;
 
 
 }
@@ -345,6 +389,10 @@ void EcatRobotStateMsg::deserialize(
 
     dcdr >> m_preassure2;
 
+    dcdr >> m_joints_torques_from_current;
+
+    dcdr >> m_motors_current;
+
     dcdr >> m_feet_contact;
 
     dcdr >> m_feet_position;
@@ -356,6 +404,10 @@ void EcatRobotStateMsg::deserialize(
     dcdr >> m_torque_ref;
 
     dcdr >> m_current_offset;
+
+    dcdr >> m_torque_scale_factor;
+
+    dcdr >> m_chirp_freq;
 
 }
 
@@ -786,6 +838,80 @@ std::array<double, 12>& EcatRobotStateMsg::preassure2()
     return m_preassure2;
 }
 /*!
+ * @brief This function copies the value in member joints_torques_from_current
+ * @param _joints_torques_from_current New value to be copied in member joints_torques_from_current
+ */
+void EcatRobotStateMsg::joints_torques_from_current(
+        const std::array<double, 12>& _joints_torques_from_current)
+{
+    m_joints_torques_from_current = _joints_torques_from_current;
+}
+
+/*!
+ * @brief This function moves the value in member joints_torques_from_current
+ * @param _joints_torques_from_current New value to be moved in member joints_torques_from_current
+ */
+void EcatRobotStateMsg::joints_torques_from_current(
+        std::array<double, 12>&& _joints_torques_from_current)
+{
+    m_joints_torques_from_current = std::move(_joints_torques_from_current);
+}
+
+/*!
+ * @brief This function returns a constant reference to member joints_torques_from_current
+ * @return Constant reference to member joints_torques_from_current
+ */
+const std::array<double, 12>& EcatRobotStateMsg::joints_torques_from_current() const
+{
+    return m_joints_torques_from_current;
+}
+
+/*!
+ * @brief This function returns a reference to member joints_torques_from_current
+ * @return Reference to member joints_torques_from_current
+ */
+std::array<double, 12>& EcatRobotStateMsg::joints_torques_from_current()
+{
+    return m_joints_torques_from_current;
+}
+/*!
+ * @brief This function copies the value in member motors_current
+ * @param _motors_current New value to be copied in member motors_current
+ */
+void EcatRobotStateMsg::motors_current(
+        const std::array<double, 12>& _motors_current)
+{
+    m_motors_current = _motors_current;
+}
+
+/*!
+ * @brief This function moves the value in member motors_current
+ * @param _motors_current New value to be moved in member motors_current
+ */
+void EcatRobotStateMsg::motors_current(
+        std::array<double, 12>&& _motors_current)
+{
+    m_motors_current = std::move(_motors_current);
+}
+
+/*!
+ * @brief This function returns a constant reference to member motors_current
+ * @return Constant reference to member motors_current
+ */
+const std::array<double, 12>& EcatRobotStateMsg::motors_current() const
+{
+    return m_motors_current;
+}
+
+/*!
+ * @brief This function returns a reference to member motors_current
+ * @return Reference to member motors_current
+ */
+std::array<double, 12>& EcatRobotStateMsg::motors_current()
+{
+    return m_motors_current;
+}
+/*!
  * @brief This function copies the value in member feet_contact
  * @param _feet_contact New value to be copied in member feet_contact
  */
@@ -1006,6 +1132,80 @@ const std::array<double, 12>& EcatRobotStateMsg::current_offset() const
 std::array<double, 12>& EcatRobotStateMsg::current_offset()
 {
     return m_current_offset;
+}
+/*!
+ * @brief This function copies the value in member torque_scale_factor
+ * @param _torque_scale_factor New value to be copied in member torque_scale_factor
+ */
+void EcatRobotStateMsg::torque_scale_factor(
+        const std::array<double, 12>& _torque_scale_factor)
+{
+    m_torque_scale_factor = _torque_scale_factor;
+}
+
+/*!
+ * @brief This function moves the value in member torque_scale_factor
+ * @param _torque_scale_factor New value to be moved in member torque_scale_factor
+ */
+void EcatRobotStateMsg::torque_scale_factor(
+        std::array<double, 12>&& _torque_scale_factor)
+{
+    m_torque_scale_factor = std::move(_torque_scale_factor);
+}
+
+/*!
+ * @brief This function returns a constant reference to member torque_scale_factor
+ * @return Constant reference to member torque_scale_factor
+ */
+const std::array<double, 12>& EcatRobotStateMsg::torque_scale_factor() const
+{
+    return m_torque_scale_factor;
+}
+
+/*!
+ * @brief This function returns a reference to member torque_scale_factor
+ * @return Reference to member torque_scale_factor
+ */
+std::array<double, 12>& EcatRobotStateMsg::torque_scale_factor()
+{
+    return m_torque_scale_factor;
+}
+/*!
+ * @brief This function copies the value in member chirp_freq
+ * @param _chirp_freq New value to be copied in member chirp_freq
+ */
+void EcatRobotStateMsg::chirp_freq(
+        const std::array<double, 12>& _chirp_freq)
+{
+    m_chirp_freq = _chirp_freq;
+}
+
+/*!
+ * @brief This function moves the value in member chirp_freq
+ * @param _chirp_freq New value to be moved in member chirp_freq
+ */
+void EcatRobotStateMsg::chirp_freq(
+        std::array<double, 12>&& _chirp_freq)
+{
+    m_chirp_freq = std::move(_chirp_freq);
+}
+
+/*!
+ * @brief This function returns a constant reference to member chirp_freq
+ * @return Constant reference to member chirp_freq
+ */
+const std::array<double, 12>& EcatRobotStateMsg::chirp_freq() const
+{
+    return m_chirp_freq;
+}
+
+/*!
+ * @brief This function returns a reference to member chirp_freq
+ * @return Reference to member chirp_freq
+ */
+std::array<double, 12>& EcatRobotStateMsg::chirp_freq()
+{
+    return m_chirp_freq;
 }
 
 

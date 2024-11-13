@@ -43,6 +43,9 @@ add_executable(${PROJECT_NAME}
      	       src/ec_hydraulic_control.cpp
                src/utils.cpp
                src/custom_pid.cpp
+               src/net_stat.cpp
+               src/trajectory_generator.cpp
+               src/torque_compensation.cpp
                ${DDS_MESSAGE_SOURCES_CXX}
                ${DDS_MESSAGE_SOURCES_CPP})
 
@@ -71,3 +74,21 @@ target_link_libraries(${PROJECT_NAME}
 install(TARGETS ${PROJECT_NAME}
         DESTINATION bin
         COMPONENT applications)
+
+add_executable(torque_compensation_test
+       src/torque_compensation.cpp
+       tests/torque_compensation.cpp)
+
+target_include_directories(torque_compensation_test
+PUBLIC
+    include
+)
+
+target_link_libraries(torque_compensation_test
+PUBLIC
+    yaml-cpp
+)
+
+install(TARGETS torque_compensation_test
+DESTINATION bin
+COMPONENT applications)
