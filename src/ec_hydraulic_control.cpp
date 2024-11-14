@@ -12,7 +12,7 @@
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 
-#include "utils/ec_common_step.h"
+#include "utils/ec_wrapper.h"
 #include <test_common.h>
 
 #include <fstream>
@@ -43,45 +43,32 @@ int main(int argc, char * const argv[])
     // Create ecat client
     EcUtils::EC_CONFIG ec_cfg;
     EcIface::Ptr client;
-    EcCommonStep ec_common_step;
+    EcWrapper ec_wrapper;
 
     try{
-        ec_common_step.create_ec(client,ec_cfg);
+        ec_wrapper.create_ec(client, ec_cfg);
     }catch(std::exception &ex){
         DPRINTF("%s\n",ex.what());
         return 1;
     }
 
     // Detect and start slaves
-    bool sys_ctrl=true;
+    bool ec_sys_started = true;
     try{
-        ec_common_step.autodetection();
-        sys_ctrl=ec_common_step.start_ec_motors();
-        // sys_ctrl &= ec_common_step.start_ec_valves();
-    }catch(std::exception &ex){
-        DPRINTF("%s\n",ex.what());
+        ec_sys_started = ec_wrapper.start_ec_sys();
+    }
+    catch (std::exception &ex){
+        DPRINTF("%s\n", ex.what());
         return 1;
     }
 
-    if(sys_ctrl)
+    if(ec_sys_started)
     {        
         // MEMORY ALLOCATION
-	    
-        // -- CTRL+C handler
-        struct sigaction sa;
-        sa.sa_handler = sig_handler;
-        sa.sa_flags = 0;  // receive will return EINTR on CTRL+C!
-        sigaction(SIGINT,&sa, nullptr);
-
-        // -- Time variables
-        struct timespec ts= { 0, ec_cfg.period_ms*1000000}; //sample time
-        uint64_t start_time_ns=0;
-        uint64_t time_ns=0;
-        int64_t sleep_ns=0, min_sleep_ns=10000;
-        float time_elapsed_ms;
 
         // -- Robot data
         struct RobotState{ // actual robot state
+            std::array<uint32_t,NUM_JOINTS> status_word;
             std::array<double, NUM_JOINTS> joints_position {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}; // linear position for hydraulic actuation
             std::array<double, NUM_JOINTS> joints_velocity{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
             std::array<double, NUM_JOINTS> joints_acceleration{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
@@ -97,6 +84,10 @@ int main(int argc, char * const argv[])
             std::array<double,NUM_JOINTS> link_vel; // only for electric motors
             std::array<double,NUM_JOINTS> board_temp; // only for electric motors
             std::array<double,NUM_JOINTS> aux; // only for electric motors
+            std::array<double,NUM_JOINTS> pos_ref_fb; // only for electric motors
+            std::array<double,NUM_JOINTS> vel_ref_fb; // only for electric motors
+            std::array<double,NUM_JOINTS> tor_ref_fb; // only for electric motors
+            std::array<double,NUM_JOINTS> curr_ref_fb; // only for electric motors
         } state;
         struct RobotRef{ // desired robot state
             std::array<double, NUM_JOINTS> kp_torque{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
@@ -112,7 +103,7 @@ int main(int argc, char * const argv[])
         } ref;
 
         // -- Configuration files
-        YAML::Node ecat_config = YAML::LoadFile(ec_common_step.get_ec_utils()->get_ec_cfg_file());
+        YAML::Node ecat_config = YAML::LoadFile(ec_wrapper.get_ec_utils()->get_ec_cfg_file());
         YAML::Node id_map = YAML::LoadFile(ecat_config["control"]["id_map_path"].as<std::string>());
         YAML::Node torque_comp_config = YAML::LoadFile(ecat_config["control"]["torque_compensation"].as<std::string>());
 
@@ -131,19 +122,12 @@ int main(int argc, char * const argv[])
             torque_comp[i].init(torque_comp_config[std::to_string(i)].as<std::vector<double>>());
         }
 
-        // -- Read
-        client->read();
-
         // -- Electric motors
-        MotorStatusMap motors_status_map;
-        MotorReferenceMap motors_ref;
-        client->get_motors_status(motors_status_map);
-
         // --- initialize motor references
         // --- position offset (is the angle when the hand-stop of the flywheel is at the middle)
         double position_offset = 0.0;
-        for ( const auto &[esc_id, rx_pdo] : motors_status_map){
-            motors_ref[esc_id]=std::make_tuple(ec_cfg.motor_config_map[esc_id].control_mode_type, //ctrl_type
+        for ( const auto &[esc_id, rx_pdo] : motor_status_map){
+            motor_reference_map[esc_id]=std::make_tuple(ec_cfg.motor_config_map[esc_id].control_mode_type, //ctrl_type
                                                 0.0, //pos_ref
                                                 0.0, //vel_ref
                                                 0.0, //tor_ref
@@ -175,7 +159,7 @@ int main(int argc, char * const argv[])
         const double alpha = 1 - exp(-2.0 * M_PI * 50 / 1000.0);
         double torque_filtered = 0.0;
 
-        // if(motors_ref.empty()){
+        // if(motor_reference_map.empty()){
         //     throw std::runtime_error("fatal error: motors reference is empty");
         // }
 
@@ -244,54 +228,50 @@ int main(int argc, char * const argv[])
         }
 
         // Make this process REAL-TIME
-        if(ec_cfg.protocol=="iddp"){
-            DPRINTF("Real-time process....\n");
+        if (ec_cfg.protocol == "iddp"){
             // add SIGALRM
-            main_common (&argc, (char*const**)&argv, 0);
-            assert(set_main_sched_policy(10) >= 0);
+            signal ( SIGALRM, sig_handler );
+            //avoid map swap
+            main_common (&argc, (char*const**)&argv, sig_handler);
         }
-        // if (ec_cfg.protocol == "iddp"){
-        //     DPRINTF("Real-time process....\n");
-        //     // add SIGALRM
-        //     main_common(&argc, (char *const **)&argv, 0);
-        //     int priority = SCHED_OTHER;
-        //     #if defined(PREEMPT_RT) || defined(__COBALT__)
-        //         priority = sched_get_priority_max ( SCHED_FIFO ) / 3;
-        //     #endif
-        //     int ret = set_main_sched_policy(priority);
-        //     if (ret < 0){
-        //         throw std::runtime_error("fatal error on set_main_sched_policy");
-        //     }
-        // }
-
-        // start_time_ns= iit::ecat::get_time_ns();
-        // time_ns=start_time_ns;
+        else{
+            struct sigaction sa;
+            sa.sa_handler = sig_handler;
+            sa.sa_flags = 0;  // receive will return EINTR on CTRL+C!
+            sigaction(SIGINT,&sa, nullptr);
+        }
+        // process scheduling
+        try{
+            ec_wrapper.ec_self_sched(argv[0]);
+        }catch(std::exception& e){
+            throw std::runtime_error(e.what());
+        }
+    
         // read desired torque profile
-
         std::vector<std::vector<double>> torque_profile = read_csv_double(ecat_config["control"]["torque_profile"].as<std::string>());
         std::vector<std::vector<double>> position_profile = read_csv_double(ecat_config["control"]["position_profile"].as<std::string>());
         const std::string position_profile_joint = "haa";
         // variable used to read torque profile data from csv file
         int profile_row = 0;
         int hal_id = 0;
+
+        const auto period = std::chrono::nanoseconds(ec_cfg.period_ms * 1000000);
         // time when the command are sent: used to save data in the csv files
-
-        double sending_start_time = iit::ecat::get_time_ns(CLOCK_MONOTONIC);
         double sending_time = 0.0;
+        auto time = std::chrono::high_resolution_clock::now();
+        double sending_start_time = time.count();
         
-        while (run && client->is_client_alive())
+        while (run && && client->get_client_status().run_loop)
         {
-            start_time_ns = iit::ecat::get_time_ns(CLOCK_MONOTONIC);
-
             client->read();
-            //DPRINTF("Time [%f]\n",time_elapsed_ms);
             // Read robot state
             // -- motors
-            client->get_motors_status(motors_status_map);
-            for ( const auto &[ecat_id, rx_pdo] : motors_status_map){
+            client->get_motor_status(motor_status_map);
+            for ( const auto &[ecat_id, rx_pdo] : motor_status_map){
                 hal_id = ecat_to_hal_id[ecat_id];
                 try {
-                    std::tie(state.link_pos[hal_id],
+                    std::tie(state.
+                    state.link_pos[hal_id],
                     state.joints_position[hal_id],
                     state.link_vel[hal_id],
                     state.joints_velocity[hal_id],
@@ -396,7 +376,7 @@ int main(int argc, char * const argv[])
             // }
 
             // Send desired torques to slave (0.281Nm: torque constant of Circulo (default value))            
-            for ( auto &[ecat_id, rx_pdo] : motors_ref){
+            for ( auto &[ecat_id, rx_pdo] : motor_reference_map){
                 // for advr driver, setting tor_ref in control mode, let the low level understand that tor_ref is actually a current. So there is no need to multiply the current with the torque constant
                 // double compensed_torque = torque_comp[ecat_to_hal_id[ecat_id]].run(state.joints_temperature[ecat_to_hal_id[ecat_id]], state.joints_velocity[ecat_to_hal_id], ref.torque[ecat_to_hal_id]);
                 // TODO: use real temperature and motor velocity
@@ -452,7 +432,7 @@ int main(int argc, char * const argv[])
                 ref.current[ecat_to_hal_id[ecat_id]] = (1/(torque_constant*reduction_ratio)) * std::get<3>(rx_pdo);
             }
             profile_row++;
-            client->set_motors_references(RefFlags::FLAG_MULTI_REF, motors_ref);
+            client->set_motor_reference(motor_reference_map);
             
             // -- valves
             // for ( auto &[ecat_id, rx_pdo] : valves_ref){
@@ -461,9 +441,9 @@ int main(int argc, char * const argv[])
             // client->set_valves_references(RefFlags::FLAG_MULTI_REF, valves_ref);
 
             client->write();
-            sending_time = iit::ecat::get_time_ns(CLOCK_MONOTONIC)-sending_start_time;
+            sending_time = std::chrono::high_resolution_clock::now().count()-sending_start_time;
 
-            client->log();
+            ec_wrapper.log_ec_sys();
 
             // Publish dds messages
             for(int i=0; i<state.joints_position.size();i++){
@@ -502,12 +482,18 @@ int main(int argc, char * const argv[])
             pub_dds.publish();
             pub_dds_net_stat.publish();
 
-            sleep_ns = static_cast<uint64_t>(ec_cfg.period_ms*1'000'000-(iit::ecat::get_time_ns(CLOCK_MONOTONIC)-start_time_ns));
+            time = time + period;
 
-            sleep_ns = std::max(min_sleep_ns, sleep_ns);
-            ts.tv_nsec=sleep_ns;
-            while(clock_nanosleep(CLOCK_MONOTONIC, 0, &ts,NULL) == -1 && errno == EINTR)
-            {} 
+            const auto now = std::chrono::high_resolution_clock::now();
+
+#if defined(PREEMPT_RT) || defined(__COBALT__)
+            // if less than threshold, print warning (only on rt threads)
+            if (now > time && ec_cfg.protocol == "iddp"){
+                ++overruns;
+                DPRINTF("main process overruns: %d\n", overruns);
+            }
+#endif
+            std::this_thread::sleep_until(time);
         }
 
         // save test data
@@ -526,9 +512,7 @@ int main(int argc, char * const argv[])
     }
     
     // Stop slaves
-    ec_common_step.stop_ec_motors();
-    ec_common_step.stop_ec_valves();
-    ec_common_step.stop_ec();
+    ec_wrapper.stop_ec_sys();
     
     return 0;
 }
