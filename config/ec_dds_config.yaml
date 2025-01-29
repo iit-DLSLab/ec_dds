@@ -1,27 +1,23 @@
 network:
-  #protocol: zipc
-  #hostname: /tmp/ecat_master
-  
+#protocol: zipc
+#hostname: /tmp/ecat_master
   protocol: iddp #tcp #iddp #udp
   hostname: localhost #10.240.23.30 #localhost #192.168.99.10 #192.168.9.99 #10.240.22.49
   port: 5000 #54321(UDP)
   timeout: 1000
 
-period_ms: 1
-logging: false # file stored in /tmp
-auto-start: true
+general:
+  period_ms: 1
+  logging: true
 
-control:
+robot:
   #hqr3_tor_cc.yaml, hyqreal3_pos3b
-  motor_config_path: /home/embedded/dls_ws/src/ec_dds/config/motor_config/hyqreal3/hqr3_tor_cc.yaml
-  torque_compensation: /home/embedded/dls_ws/src/ec_dds/config/motor_config/hyqreal3/hyqreal3_torque_comp.yaml
-  id_map_path: &id_map_path '/home/embedded/dls_ws/src/ec_dds/config/id_map/hyqreal3/hyqreal3_id_map.yaml'
-  torque_profile: /home/embedded/dls_ws/src/ec_dds/torque_profiles/Interp_Torque_Profiles_hyqreal_sim.csv
+  torque_compensation: /home/embedded/dls_ws/src/ec_dds/config/robot_control/hqr3/motor/hyqr3_torque_compensation.yaml
+  # torque_profile: /home/embedded/dls_ws/src/ec_dds/torque_profiles/current_consumption_torque_interp.csv
+  torque_profile: /home/embedded/dls_ws/src/ec_dds/torque_profiles/torque_current_consumption/torque_current_consumption_-70Nm.csv
   position_profile: /home/embedded/dls_ws/src/ec_dds/position_profiles/Interp_Position_Profiles_hyqreal_sim.csv
-  #imu_id: [102]
-  # motor_id: [1]
-  #pow_id: [201]
-  # valve_id: [3]
-  #pump_id: [202]
   current_max: 20 #mA
-  current_offset: [0,0,-1,0,0,-1,0,0,-1,0,0,-1] #mA
+  current_offset: [-70,0,-1,0,0,-1,0,0,-1,0,0,-1] #mA
+
+  robot_id_map_path: /home/embedded/dls_ws/src/ec_dds/config/robot_id_map/hqr3/hqr3_id_map.yaml 
+  robot_control_path: /home/embedded/dls_ws/src/ec_dds/config/robot_control/hqr3/hqr3_control.yaml

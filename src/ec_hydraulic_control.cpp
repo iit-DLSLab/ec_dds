@@ -64,6 +64,7 @@ int main(int argc, char * const argv[])
 
     if(ec_sys_started)
     {        
+        int overruns = 0;
         // MEMORY ALLOCATION
 
         // -- Robot data
@@ -74,16 +75,14 @@ int main(int argc, char * const argv[])
             std::array<double, NUM_JOINTS> joints_acceleration{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
             std::array<double, NUM_JOINTS> joints_torques{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}; // force for hydraulic actuation
             std::array<double, NUM_JOINTS> joints_torques_from_current{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}; // torque estimanted from current
-	        std::array<double, NUM_JOINTS> joints_temperature{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
             std::array<double,NUM_JOINTS> motors_current{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}; // motor side
 	        std::array<double, NUM_JOINTS> preassure1{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}; // preassures are only for hydraulic actuators
 	        std::array<double, NUM_JOINTS> preassure2{0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}; // preassures are only for hydraulic actuators
-            std::array<uint32_t, NUM_JOINTS> fault,rtt,op_idx_ack; // only for electric motors
-            std::array<uint32_t, NUM_JOINTS> cmd_aux_sts,brake_sts,led_sts; // only for electric motors
+            std::array<uint32_t, NUM_JOINTS> fault,rtt; // only for electric motors
             std::array<double,NUM_JOINTS> link_pos; // only for electric motors
             std::array<double,NUM_JOINTS> link_vel; // only for electric motors
+            std::array<double,NUM_JOINTS> motor_temp; // only for electric motors
             std::array<double,NUM_JOINTS> board_temp; // only for electric motors
-            std::array<double,NUM_JOINTS> aux; // only for electric motors
             std::array<double,NUM_JOINTS> pos_ref_fb; // only for electric motors
             std::array<double,NUM_JOINTS> vel_ref_fb; // only for electric motors
             std::array<double,NUM_JOINTS> tor_ref_fb; // only for electric motors
@@ -104,8 +103,8 @@ int main(int argc, char * const argv[])
 
         // -- Configuration files
         YAML::Node ecat_config = YAML::LoadFile(ec_wrapper.get_ec_utils()->get_ec_cfg_file());
-        YAML::Node id_map = YAML::LoadFile(ecat_config["control"]["id_map_path"].as<std::string>());
-        YAML::Node torque_comp_config = YAML::LoadFile(ecat_config["control"]["torque_compensation"].as<std::string>());
+        YAML::Node id_map = YAML::LoadFile(ecat_config["robot"]["robot_id_map_path"].as<std::string>());
+        YAML::Node torque_comp_config = YAML::LoadFile(ecat_config["robot"]["torque_compensation"].as<std::string>());
 
         // -- ID mapping: from ecat to hal and viceversa
         std::map<int,int> ecat_to_hal_id;
@@ -127,20 +126,20 @@ int main(int argc, char * const argv[])
         // --- position offset (is the angle when the hand-stop of the flywheel is at the middle)
         double position_offset = 0.0;
         for ( const auto &[esc_id, rx_pdo] : motor_status_map){
-            motor_reference_map[esc_id]=std::make_tuple(ec_cfg.motor_config_map[esc_id].control_mode_type, //ctrl_type
-                                                0.0, //pos_ref
-                                                0.0, //vel_ref
-                                                0.0, //tor_ref
-                                                ec_cfg.motor_config_map[esc_id].gains[0], //gain_1
-                                                ec_cfg.motor_config_map[esc_id].gains[1], //gain_2
-                                                ec_cfg.motor_config_map[esc_id].gains[2], //gain_3
-                                                ec_cfg.motor_config_map[esc_id].gains[3], //gain_4
-                                                ec_cfg.motor_config_map[esc_id].gains[4], //gain_5
-                                                1, // op means NO_OP
-                                                0, // idx
-                                                0  // aux
-                                                );
-            position_offset = std::get<1>(rx_pdo);
+            // motor_reference_map[esc_id]=std::make_tuple(ec_cfg.device_config_map[esc_id].control_mode_type, //ctrl_type
+            //                                     0.0, //pos_ref
+            //                                     0.0, //vel_ref
+            //                                     0.0, //tor_ref
+            //                                     ec_cfg.device_config_map[esc_id].gains[0], //gain_1
+            //                                     ec_cfg.device_config_map[esc_id].gains[1], //gain_2
+            //                                     ec_cfg.device_config_map[esc_id].gains[2], //gain_3
+            //                                     ec_cfg.device_config_map[esc_id].gains[3], //gain_4
+            //                                     ec_cfg.device_config_map[esc_id].gains[4], //gain_5
+            //                                     1, // op means device_config_map
+            //                                     0, // idx
+            //                                     0  // aux
+            //                                     );
+            position_offset = std::get<2>(rx_pdo);
             ref.position[ecat_to_hal_id[esc_id]] = position_offset;
         }
 
@@ -158,23 +157,11 @@ int main(int argc, char * const argv[])
         // --- torque filtering
         const double alpha = 1 - exp(-2.0 * M_PI * 50 / 1000.0);
         double torque_filtered = 0.0;
-
-        // if(motor_reference_map.empty()){
-        //     throw std::runtime_error("fatal error: motors reference is empty");
-        // }
-
-        // -- Hydraulic motors
-        // ValveStatusMap valves_status_map;
-        // ValveReferenceMap valves_ref;
-        // client->get_valve_status(valves_status_map);
-        // // --- initialize valve references
-        // for ( const auto &[esc_id, rx_pdo] : valves_status_map){
-        //     valves_ref[esc_id] = std::make_tuple(0,0,0,0,0,0,0,0);
-        // }
-        // if(valves_ref.empty()){
-        //     throw std::runtime_error("fatal error: valves reference is empty");
-        // }
         
+        // Valve motors
+        std::array<double,NUM_JOINTS> valve_gains_sign;
+        valve_gains_sign.fill(1);
+
         // -- PID
         std::array<CustomPID, NUM_JOINTS> pid_torque;  // these are forces in case of hydraulic actuation
         for(auto &pid : pid_torque){
@@ -186,8 +173,8 @@ int main(int argc, char * const argv[])
             // dt, kp_limit, ki_limit, kd_limit, pid_limit, error_i_limit
             pid.init(ec_cfg.period_ms*0.001, 20.0, 0.1, 20.0, 20.0, 0.1);
         }
-        double current_max = ecat_config["control"]["current_max"].as<double>();
-        // std::array<double, NUM_JOINTS> current_offset = ecat_config["control"]["current_offset"].as<std::array<double, NUM_JOINTS>>();
+        double current_max = ecat_config["robot"]["current_max"].as<double>();
+        std::array<double, NUM_JOINTS> current_offset = ecat_config["robot"]["current_offset"].as<std::array<double, NUM_JOINTS>>();
         std::array<double, NUM_JOINTS> slaves_curr_ref{0,0,0,0,0,0,0,0,0,0,0,0};
 
         // -- Network statistics
@@ -248,8 +235,8 @@ int main(int argc, char * const argv[])
         }
     
         // read desired torque profile
-        std::vector<std::vector<double>> torque_profile = read_csv_double(ecat_config["control"]["torque_profile"].as<std::string>());
-        std::vector<std::vector<double>> position_profile = read_csv_double(ecat_config["control"]["position_profile"].as<std::string>());
+        std::vector<std::vector<double>> torque_profile = read_csv_double(ecat_config["robot"]["torque_profile"].as<std::string>());
+        std::vector<std::vector<double>> position_profile = read_csv_double(ecat_config["robot"]["position_profile"].as<std::string>());
         const std::string position_profile_joint = "haa";
         // variable used to read torque profile data from csv file
         int profile_row = 0;
@@ -259,9 +246,9 @@ int main(int argc, char * const argv[])
         // time when the command are sent: used to save data in the csv files
         double sending_time = 0.0;
         auto time = std::chrono::high_resolution_clock::now();
-        double sending_start_time = time.count();
+        double sending_start_time = std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count();
         
-        while (run && && client->get_client_status().run_loop)
+        while (run && client->get_client_status().run_loop)
         {
             client->read();
             // Read robot state
@@ -270,50 +257,44 @@ int main(int argc, char * const argv[])
             for ( const auto &[ecat_id, rx_pdo] : motor_status_map){
                 hal_id = ecat_to_hal_id[ecat_id];
                 try {
-                    std::tie(state.
+                    std::tie(state.status_word[hal_id],
                     state.link_pos[hal_id],
                     state.joints_position[hal_id],
                     state.link_vel[hal_id],
                     state.joints_velocity[hal_id],
                     state.joints_torques[hal_id],
-                    state.joints_temperature[hal_id],
+                    state.motors_current[hal_id],
+                    state.motor_temp[hal_id],
                     state.board_temp[hal_id],
                     state.fault[hal_id],
                     state.rtt[hal_id],
-                    state.op_idx_ack[hal_id],
-                    state.aux[hal_id],
-                    state.cmd_aux_sts[hal_id]) = rx_pdo;
+                    state.pos_ref_fb[hal_id],
+                    state.vel_ref_fb[hal_id],
+                    state.tor_ref_fb[hal_id],
+                    state.curr_ref_fb[hal_id]) = rx_pdo;
                     if(motor_type=="circulo"){
-                        state.joints_torques[hal_id] = -4.7 + state.joints_torques[hal_id];
-                        state.joints_torques_from_current[hal_id] = state.aux[hal_id];//*torque_constant*reduction_ratio; //torque from current (in case of advr it is the current directly, so needs to be multiplied by the torque constant (0.281) and the reduction ratio (15));
-                        state.motors_current[hal_id] = (1/(torque_constant*reduction_ratio))*state.joints_torques_from_current[hal_id]; //advr: state.aux[i], circulo: 1/(torque_constant*reduction_ratio)*state.aux[i]
-                        // PRINT OUT Brakes and LED get_motors_status @ NOTE To be tested.         
-                            
+                        state.joints_torques[hal_id] = -23.2 + state.joints_torques[hal_id];
+                        state.joints_torques_from_current[hal_id] = state.motors_current[hal_id];
+                        state.motors_current[hal_id] = state.motors_current[hal_id]/(torque_constant*reduction_ratio);
                     }
                     else if (motor_type=="advr"){
                         state.joints_torques[hal_id] = -3.6 + state.joints_torques[hal_id];
-                        state.joints_torques_from_current[hal_id] = state.aux[hal_id]*torque_constant*reduction_ratio; //torque from current (in case of advr it is the current directly, so needs to be multiplied by the torque constant (0.281) and the reduction ratio (15));
-                        state.motors_current[hal_id] = (1/(torque_constant*reduction_ratio))*state.joints_torques_from_current[hal_id];
+                        state.joints_torques_from_current[hal_id] = state.motors_current[hal_id]*torque_constant*reduction_ratio;
                     }
-                    // PRINT OUT Brakes and LED get_motors_status @ NOTE To be tested.         
-                    state.brake_sts[hal_id] = state.cmd_aux_sts[hal_id] & 3; //00 unknown
-                                                //01 release brake 
-                                                //10 enganged brake  
-                                                //11 error
-                    state.led_sts[hal_id]= (state.cmd_aux_sts[hal_id] & 4)/4; // 1 or 0 LED  ON/OFF
                 } catch (std::out_of_range oor) {}
             }
             // -- valves
-            // client->get_valve_status(valves_status_map);
-            // for ( const auto &[ecat_id, rx_pdo] : valves_status_map){
-            //     // raw data is in micrometer (1000um = 1mm), here we convert to meter
-            //     hal_id = ecat_to_hal_id[ecat_id];
-            //     state.joints_position[hal_id] =      std::get<0>(rx_pdo)/1000000.0;
-            //     state.joints_torques[hal_id] =       std::get<1>(rx_pdo)-105;//-22327.5;
-            //     state.preassure1[hal_id] =           std::get<2>(rx_pdo);
-            //     state.preassure2[hal_id] =           std::get<3>(rx_pdo);
-            //     state.joints_temperature[hal_id] =   std::get<4>(rx_pdo);
-            // }
+            client->get_valve_status(valve_status_map);
+            for ( const auto &[ecat_id, rx_pdo] : valve_status_map){
+                // raw data is in micrometer (1000um = 1mm), here we convert to meter
+                hal_id = ecat_to_hal_id[ecat_id];
+                state.joints_position[hal_id] =      std::get<0>(rx_pdo)/1000000.0;
+                state.joints_torques[hal_id] =       std::get<1>(rx_pdo);//-22327.5;
+                state.preassure1[hal_id] =           std::get<2>(rx_pdo);
+                state.preassure2[hal_id] =           std::get<3>(rx_pdo);
+                state.motors_current [hal_id] =   std::get<4>(rx_pdo);
+                state.board_temp[hal_id] =   std::get<5>(rx_pdo);
+            }
 
             // Get references
             ref_msg = sub_dds.getMsg();
@@ -374,7 +355,8 @@ int main(int argc, char * const argv[])
             //         slaves_curr_ref[i]  = -current_max;
             //     }
             // }
-
+            if (!motor_reference_map.empty())
+            {
             // Send desired torques to slave (0.281Nm: torque constant of Circulo (default value))            
             for ( auto &[ecat_id, rx_pdo] : motor_reference_map){
                 // for advr driver, setting tor_ref in control mode, let the low level understand that tor_ref is actually a current. So there is no need to multiply the current with the torque constant
@@ -390,10 +372,10 @@ int main(int argc, char * const argv[])
 
                 // desired torque from torque profile
                 // if(profile_row<torque_profile.size()){
-                //     ref.torque[ecat_to_hal_id[ecat_id]] = torque_profile[profile_row][1]; // 1: hfe des_torque, 2: haa des_torque, 
+                //     ref.torque[ecat_to_hal_id[ecat_id]] = torque_profile[profile_row][0]; // 1: hfe des_torque, 2: haa des_torque, 
                 // }
                 // else{
-                //     ref.torque[ecat_to_hal_id[ecat_id]] = 0.0;
+                //     // ref.torque[ecat_to_hal_id[ecat_id]] = 0.0;
                 // }
                 // std::get<3>(rx_pdo) = ref.torque[ecat_to_hal_id[ecat_id]];
 
@@ -406,7 +388,7 @@ int main(int argc, char * const argv[])
                 // std::get<3>(rx_pdo) = torque_filtered;
 
                 // torque with offset
-                std::get<3>(rx_pdo) = ref.torque[ecat_to_hal_id[ecat_id]] + ref.current_offset[ecat_to_hal_id[ecat_id]];
+                // std::get<3>(rx_pdo) = ref.torque[ecat_to_hal_id[ecat_id]] + current_offset[0];//ref.current_offset[ecat_to_hal_id[ecat_id]];
                 
                 // torque scale factor identification
                 // std::get<3>(rx_pdo) = ref.torque[ecat_to_hal_id[ecat_id]]*ref_msg.torque_scale_factor()[ecat_to_hal_id[ecat_id]];
@@ -424,24 +406,45 @@ int main(int argc, char * const argv[])
                 //         ref.position[ecat_to_hal_id[ecat_id]] = position_offset + position_profile[profile_row][1]; // 0: hfe, 1: haa 
                 //     } 
                 // }
-                // std::get<1>(rx_pdo) = ref.position[ecat_to_hal_id[ecat_id]];
+                std::get<1>(rx_pdo) = ref.position[ecat_to_hal_id[ecat_id]];
                 
                 // --- default position control ---
                 // std::get<1>(rx_pdo) = ref.position[ecat_to_hal_id[ecat_id]];
 
-                ref.current[ecat_to_hal_id[ecat_id]] = (1/(torque_constant*reduction_ratio)) * std::get<3>(rx_pdo);
+                // ref.current[ecat_to_hal_id[ecat_id]] = (1/(torque_constant*reduction_ratio)) * std::get<3>(rx_pdo);
             }
             profile_row++;
             client->set_motor_reference(motor_reference_map);
-            
-            // -- valves
-            // for ( auto &[ecat_id, rx_pdo] : valves_ref){
-            //     std::get<0>(rx_pdo) = slaves_curr_ref[ecat_to_hal_id[ecat_id]];
-            // }
-            // client->set_valves_references(RefFlags::FLAG_MULTI_REF, valves_ref);
+        }
+
+            // Valves references
+            if (!valve_reference_map.empty()){
+                // interpolate
+                for (auto &[ecat_id, rx_pdo] : valve_reference_map){
+                    int ctrl_mode= ec_cfg.device_config_map[ecat_id].control_mode_type;
+
+                    if(ctrl_mode == iit::advr::Gains_Type_POSITION){
+                        std::get<1>(rx_pdo) = ref.position[ecat_to_hal_id[ecat_id]];
+                    }else if(ctrl_mode == iit::advr::Gains_Type_IMPEDANCE){
+                        std::get<0>(rx_pdo) = ref.current_offset[ecat_to_hal_id[ecat_id]];
+                        std::get<2>(rx_pdo) = ref.torque[ecat_to_hal_id[ecat_id]];
+                    }else{
+                        std::get<0>(rx_pdo) = ref.current[ecat_to_hal_id[ecat_id]] + ref.current_offset[ecat_to_hal_id[ecat_id]];
+                    }
+                    // set gains
+                    std::get<3>(rx_pdo) = valve_gains_sign[ecat_to_hal_id[ecat_id]]*ref_msg.kp_torque()[ecat_to_hal_id[ecat_id]];
+                    std::get<4>(rx_pdo) = valve_gains_sign[ecat_to_hal_id[ecat_id]]*ref_msg.ki_torque()[ecat_to_hal_id[ecat_id]];
+                    std::get<5>(rx_pdo) = valve_gains_sign[ecat_to_hal_id[ecat_id]]*ref_msg.kd_torque()[ecat_to_hal_id[ecat_id]];
+                    std::get<6>(rx_pdo) = ref_msg.torque_scale_factor()[ecat_to_hal_id[ecat_id]];    // velocity compensation gain
+                }
+                // ************************* SEND ALWAYS REFERENCES***********************************//
+                client->set_valve_reference(valve_reference_map);
+                // ************************* SEND ALWAYS REFERENCES***********************************//
+            }
 
             client->write();
-            sending_time = std::chrono::high_resolution_clock::now().count()-sending_start_time;
+            sending_time = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()
+-sending_start_time;
 
             ec_wrapper.log_ec_sys();
 
@@ -453,7 +456,7 @@ int main(int argc, char * const argv[])
                 pub_dds.msg.joints_velocity()[i]      = state.joints_velocity[i];
                 pub_dds.msg.preassure1()[i]           = state.preassure1[i];
                 pub_dds.msg.preassure2()[i]           = state.preassure2[i];
-                pub_dds.msg.joints_temperature()[i]   = state.joints_temperature[i];
+                pub_dds.msg.joints_temperature()[i]   = state.motor_temp[i];
                 pub_dds.msg.joints_torques_from_current()[i] = state.joints_torques_from_current[i];
                 pub_dds.msg.motors_current()[i] = state.motors_current[i];
                 
@@ -466,7 +469,7 @@ int main(int argc, char * const argv[])
                 pub_dds.msg.torque_scale_factor()[i] = ref_msg.torque_scale_factor()[i];
 
                 // save test data
-                test_data[i]+=std::to_string(sending_time/1000000000.0)+","+std::to_string(state.joints_position[i])+","+std::to_string(state.motors_current[i])+","+std::to_string(state.joints_torques[i])+","+std::to_string(state.joints_torques_from_current[i])+","+std::to_string(state.preassure1[i])+","+std::to_string(state.preassure2[i])+","+std::to_string(state.joints_temperature[i])+","+std::to_string(ref.current[i])+","+std::to_string(ref.torque[i])+","+std::to_string(ref.position[i])+"\n";
+                test_data[i]+=std::to_string(sending_time/1000000000.0)+","+std::to_string(state.joints_position[i])+","+std::to_string(state.motors_current[i])+","+std::to_string(state.joints_torques[i])+","+std::to_string(state.joints_torques_from_current[i])+","+std::to_string(state.preassure1[i])+","+std::to_string(state.preassure2[i])+","+std::to_string(state.motor_temp[i])+","+std::to_string(ref.current[i])+","+std::to_string(ref.torque[i])+","+std::to_string(ref.position[i])+"\n";
             }
 
             // compute network statistics

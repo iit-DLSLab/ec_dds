@@ -1,0 +1,2 @@
+Check 1: consistency of data sign
++ current --> + preassure --> positive force --> positive displacement

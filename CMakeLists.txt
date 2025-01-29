@@ -92,3 +92,28 @@ PUBLIC
 install(TARGETS torque_compensation_test
 DESTINATION bin
 COMPONENT applications)
+
+
+add_executable(communication_test
+       tests/communication_test.cpp
+       src/utils.cpp
+       ${DDS_MESSAGE_SOURCES_CXX}
+       ${DDS_MESSAGE_SOURCES_CPP})
+
+target_include_directories(communication_test
+PUBLIC
+    include
+    src
+)
+
+target_link_libraries(communication_test
+PUBLIC
+    yaml-cpp
+
+    fastrtps
+    fastcdr
+)
+
+install(TARGETS communication_test
+DESTINATION bin
+COMPONENT applications)

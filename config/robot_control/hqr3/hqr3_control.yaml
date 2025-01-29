@@ -1,0 +1,25 @@
+trajectory:
+  type: sine #spline, smoother, step, sine, stair, chirp
+  frequency: 1
+  repeat: 5
+  
+# motor:
+#   config_path: /home/embedded/dls_ws/src/ec_dds/config/robot_control/hqr3/motor/hqr3_pos3b.yaml
+#   id: [1]
+#   set_point:  {position: 1.0, velocity: 2.0, torque: 10.0, current: 2} #rad,rad/s,Nm,A
+#   homing:     [-0.2] #,-1.0,-1.0,-0.75, 1.0,-0.75,-1.0,-1.0]
+#   trajectory: [ 0.00] #,-1.9,-2.3, 0.00,-0.4, 0.00,-1.9,-2.3]
+
+valve:
+  config_path: /home/embedded/dls_ws/src/ec_dds/config/robot_control/hqr3/valve/hqr3_force4d.yaml
+  id: [1]
+  set_point:  {current: 2.5, position: 10.0, force: 1000.0} #A,um micro-meter,N
+
+#pump:
+  #id: [210,220]
+  #set_point:  {pressure: 128.0}
+
+simulation:
+  imu_id: [102]
+  ft_id: [110,111]
+  pow_id: [201]
