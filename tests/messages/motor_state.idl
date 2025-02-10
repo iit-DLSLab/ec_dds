@@ -1,0 +1,16 @@
+struct MotorStateMsg{
+    uint_32 id;
+    // Current
+    double[2] position;
+    double[2] velocity;
+    double[2] torque; // from torque sensor
+    double[2] estimated_torque; // from current
+    double[2] estimated_compensed_torque; // from current
+    double[2] current;
+    double[2] temp;
+    
+    // Desired
+    double[2] des_position;
+    double[2] des_velocity;
+    double[2] des_torque;
+}

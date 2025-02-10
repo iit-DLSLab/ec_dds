@@ -7,30 +7,32 @@
 
 class TorqueCompensation{
 public:
-    TorqueCompensation(const std::vector<double>& data);
-
     TorqueCompensation();
 
-    void init(const std::vector<double>& data);
+    void init(  const std::vector<double>& tau_control,
+                const std::vector<double>& w,
+                const std::vector<double>& temperature);
 
-    double run(double temp, double w, double tau_des);
+    double run(double current, double w, double temperature);
 
+    std::map<std::vector<double>,double> getTable();
 private:
+    // Table: motor current, motor angular velocity, motor temperature, compensation factor
     std::map<std::vector<double>,double> torque_comp_table; // in the map the data are sorted by its key in ascending order by default
 
-    const int torque_comp_vars;
-
-    std::vector<double> temp_keys;
-    std::vector<double> w_keys;
-    std::vector<double> tau_des_keys;
+    // motor torque used to build the table
+    std::vector<double> tau_control;
+    
+    // Table keys
+    std::vector<double> current;
+    std::vector<double> w;
+    std::vector<double> temperature;
     
     void sortAndUniqueVec(std::vector<double>& vec);
 
     std::array<double,2> findLowerUpperBounds(double value, std::vector<double> data);
 
-
     double findCubeVertex(double temp_bound, double w_bound, double tau_des_bound);
-
 
     // Function for linear interpolation between two points
     double linearInterpolate(double xL, double xU, double yL, double yU, double x);
@@ -42,4 +44,5 @@ private:
         double yLLU, double yULU, double yLUU, double yUUU,  // Values at the corners for x3U
         double x1, double x2, double x3);                    // The point where we want to interpolate
     };
+
 #endif

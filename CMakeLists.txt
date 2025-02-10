@@ -71,7 +71,38 @@ target_link_libraries(${PROJECT_NAME}
     fmt
     )
 
+add_executable(compute_torque_comp_table
+            test/compute_torque_comp_table.cpp
+            src/utils.cpp
+            "test/messages/motor_state*.cxx"
+            "test/messages/motor_state*.cpp")
+
+target_include_directories(compute_torque_comp_table
+PUBLIC
+    include
+    test/messages
+)
+
+if ( Xenomai_FOUND )
+    xenomai_target_bootstrap(compute_torque_comp_table SKINS posix)
+    xenomai_target_bootstrap(compute_torque_comp_table SKINS posix)
+endif()
+        
+target_link_libraries(compute_torque_comp_table
+    PUBLIC
+    ecat_client_advr::ec_library
+    ecat_master::tools_utils
+    fastrtps
+    fastcdr
+    fastdds::optionparser
+    fmt
+    )
+
 install(TARGETS ${PROJECT_NAME}
+DESTINATION bin
+COMPONENT applications)
+
+install(TARGETS compute_torque_comp_table
         DESTINATION bin
         COMPONENT applications)
 

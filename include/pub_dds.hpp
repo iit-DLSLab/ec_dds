@@ -25,7 +25,7 @@ public:
 
     //!Initialize
     bool init(
-            bool use_env);
+            bool use_env=false);
 
     //!Publish a sample
     bool publish(bool waitForListener = false);
