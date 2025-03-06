@@ -5,8 +5,8 @@
 
 #include "pub_dds.hpp"
 #include "utils.hpp"
-#include <fastrtps/attributes/ParticipantAttributes.h>
-#include <fastrtps/attributes/PublisherAttributes.h>
+// #include <fastrtps/attributes/ParticipantAttributes.h>
+// #include <fastrtps/attributes/PublisherAttributes.h>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/publisher/Publisher.hpp>
 #include <fastdds/dds/publisher/qos/PublisherQos.hpp>
@@ -43,7 +43,7 @@ bool PubDDS<MsgType, Topic>::init(
     // Use discovery server
     configureParticipantAsClient(3, pqos); //3: signal domain
     // Allow dynamic types to be sent
-    pqos.wire_protocol().builtin.typelookup_config.use_server = true;
+    pqos.properties().properties().emplace_back("fastdds.type_propagation","enabled"); // it is enabled by default
 
     eprosima::fastdds::dds::StatusMask mask;
     participant_ = factory->create_participant(0, pqos);
@@ -54,8 +54,6 @@ bool PubDDS<MsgType, Topic>::init(
     }
 
     //REGISTER THE TYPE
-    type_->auto_fill_type_information(false);
-    type_->auto_fill_type_object(true);
     participant_->register_type(type_);
 
     //CREATE THE PUBLISHER

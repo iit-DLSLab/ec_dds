@@ -6,15 +6,13 @@
 #include "sub_dds.hpp"
 
 #include "utils.hpp"
-#include <fastrtps/attributes/ParticipantAttributes.h>
-#include <fastrtps/attributes/SubscriberAttributes.h>
+// #include <fastrtps/attributes/ParticipantAttributes.h>
+// #include <fastrtps/attributes/SubscriberAttributes.h>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
 #include <fastdds/dds/subscriber/DataReader.hpp>
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
-
-#include <fastdds/rtps/transport/UDPv4TransportDescriptor.h>
 
 template<class MsgType, class Topic>
 SubDDS<MsgType, Topic>::SubDDS(const std::string& topic_name)
@@ -41,15 +39,9 @@ bool SubDDS<MsgType, Topic>::init(
     }
 
     configureParticipantAsClient(3, pqos); //3: signal domain
-    pqos.wire_protocol().builtin.typelookup_config.use_server = true;	
+    // Allow dynamic types to be sent
+    pqos.properties().properties().emplace_back("fastdds.type_propagation","enabled"); // it is enabled by default
 
-    // auto udp_transport = std::make_shared<eprosima::fastdds::rtps::UDPv4TransportDescriptor>();
-
-    // auto default_reception_threads = udp_transport->default_reception_threads();
-    // udp_transport->default_reception_threads(   eprosima::fastdds::rtps::ThreadSettings{1, 0, //SCHED_FIFO, highest priority
-    //                                             default_reception_threads.affinity,
-    //                                             default_reception_threads.stack_size});
-    // pqos.transport().user_transports.push_back(udp_transport);
 
     participant_ = factory->create_participant(0, pqos);
 
@@ -59,8 +51,6 @@ bool SubDDS<MsgType, Topic>::init(
     }
 
     //REGISTER THE TYPE
-    type_.get()->auto_fill_type_information(false);
-    type_.get()->auto_fill_type_object(true);
     type_.register_type(participant_);
 
     //CREATE THE SUBSCRIBER
@@ -160,7 +150,7 @@ void SubDDS<MsgType, Topic>::SubListener::on_data_available(
         eprosima::fastdds::dds::DataReader* reader)
 {
     eprosima::fastdds::dds::SampleInfo info;
-    if (reader->take_next_sample(&msg, &info) == ReturnCode_t::RETCODE_OK)
+    if (reader->take_next_sample(&msg, &info) == eprosima::fastdds::dds::RETCODE_OK)
     {
         if (info.instance_state == eprosima::fastdds::dds::ALIVE_INSTANCE_STATE)
         {

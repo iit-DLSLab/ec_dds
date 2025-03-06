@@ -21,11 +21,9 @@ find_package(ecat_client_advr REQUIRED)
 # endif()
 
 find_package(fastcdr REQUIRED)
-find_package(fastrtps REQUIRED)
+find_package(fastdds REQUIRED)
 find_package(Eigen3 REQUIRED)
-# if(NOT fastrtps_FOUND)
-#     find_package(fastrtps REQUIRED)
-# endif()
+
 
 #Check C++17
 include(CheckCXXCompilerFlag)
@@ -37,7 +35,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 file(GLOB DDS_MESSAGE_SOURCES_CXX "src/messages/ecat*.cxx")
-file(GLOB DDS_MESSAGE_SOURCES_CPP "src/messages/ecat*.cpp")
 
 add_executable(${PROJECT_NAME} 
      	       src/ec_hydraulic_control.cpp
@@ -65,7 +62,7 @@ target_link_libraries(${PROJECT_NAME}
     PUBLIC
     ecat_client_advr::ec_library
     ecat_master::tools_utils
-    fastrtps
+    fastdds
     fastcdr
     fastdds::optionparser
     fmt
@@ -97,8 +94,11 @@ COMPONENT applications)
 add_executable(communication_test
        tests/communication_test.cpp
        src/utils.cpp
-       ${DDS_MESSAGE_SOURCES_CXX}
-       ${DDS_MESSAGE_SOURCES_CPP})
+    #    ${DDS_MESSAGE_SOURCES_CXX}
+    #    ${DDS_MESSAGE_SOURCES_CPP}
+        src/messages/testPubSubTypes.cxx
+        src/messages/testTypeObjectSupport.cxx
+       )
 
 target_include_directories(communication_test
 PUBLIC
@@ -110,7 +110,7 @@ target_link_libraries(communication_test
 PUBLIC
     yaml-cpp
 
-    fastrtps
+    fastdds
     fastcdr
 )
 
