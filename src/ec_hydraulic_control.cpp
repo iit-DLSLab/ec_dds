@@ -38,6 +38,16 @@ static void sig_handler(int sig)
     run = false;
 }
 
+struct TORQUE_SENSOR{
+    constexpr static double A0=29.0876999;
+    constexpr static double A1=-35630;
+};
+
+double convert_analog_signal_to_torque(double analog_signal){
+    // return TORQUE_SENSOR::A0*(analog_signal+TORQUE_SENSOR::A1)/1000.0; // convert to newton
+    return analog_signal;
+}
+
 int main(int argc, char * const argv[])
 {
     // Create ecat client
@@ -273,7 +283,7 @@ int main(int argc, char * const argv[])
                     state.tor_ref_fb[hal_id],
                     state.curr_ref_fb[hal_id]) = rx_pdo;
                     if(motor_type=="circulo"){
-                        state.joints_torques[hal_id] = -23.2 + state.joints_torques[hal_id];
+                        state.joints_torques[hal_id] = convert_analog_signal_to_torque(state.joints_torques[hal_id]);
                         state.joints_torques_from_current[hal_id] = state.motors_current[hal_id];
                         state.motors_current[hal_id] = state.motors_current[hal_id]/(torque_constant*reduction_ratio);
                     }
@@ -406,11 +416,20 @@ int main(int argc, char * const argv[])
                 //         ref.position[ecat_to_hal_id[ecat_id]] = position_offset + position_profile[profile_row][1]; // 0: hfe, 1: haa 
                 //     } 
                 // }
-                std::get<1>(rx_pdo) = ref.position[ecat_to_hal_id[ecat_id]];
                 
+                // std::get<7>(rx_pdo) = ref_msg.kp_torque()[ecat_to_hal_id[ecat_id]]; //P vel
+                // std::get<8>(rx_pdo) = ref_msg.ki_torque()[ecat_to_hal_id[ecat_id]]; // I vel
+                
+                int ctrl_mode= ec_cfg.device_config_map[ecat_id].control_mode_type;
+                if(ctrl_mode == iit::advr::Gains_Type_POSITION){
                 // --- default position control ---
-                // std::get<1>(rx_pdo) = ref.position[ecat_to_hal_id[ecat_id]];
+                    std::get<1>(rx_pdo) = ref.position[ecat_to_hal_id[ecat_id]];
 
+                    // Set gains
+                    std::get<4>(rx_pdo) = ref_msg.kp_position()[ecat_to_hal_id[ecat_id]];
+                    std::get<5>(rx_pdo) = ref_msg.ki_position()[ecat_to_hal_id[ecat_id]];
+                    std::get<6>(rx_pdo) = ref_msg.kd_position()[ecat_to_hal_id[ecat_id]];
+                }
                 // ref.current[ecat_to_hal_id[ecat_id]] = (1/(torque_constant*reduction_ratio)) * std::get<3>(rx_pdo);
             }
             profile_row++;
