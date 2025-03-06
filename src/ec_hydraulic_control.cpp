@@ -160,7 +160,7 @@ int main(int argc, char * const argv[])
         
         // Valve motors
         std::array<double,NUM_JOINTS> valve_gains_sign;
-        valve_gains_sign.fill(1);
+        valve_gains_sign.fill(-1);
 
         // -- PID
         std::array<CustomPID, NUM_JOINTS> pid_torque;  // these are forces in case of hydraulic actuation
@@ -247,7 +247,7 @@ int main(int argc, char * const argv[])
         double sending_time = 0.0;
         auto time = std::chrono::high_resolution_clock::now();
         double sending_start_time = std::chrono::duration_cast<std::chrono::nanoseconds>(time.time_since_epoch()).count();
-        
+        int count =0;
         while (run && client->get_client_status().run_loop)
         {
             client->read();
@@ -337,7 +337,7 @@ int main(int argc, char * const argv[])
                 // ref.torque[i] = ref_msg.torque_ref()[i];
                 ref.current_offset[i] = ref_msg.current_offset()[i];
                 // Set PID gains
-                pid_torque[i].setGains(ref_msg.kp_torque()[i], ref_msg.ki_torque()[i], ref_msg.kd_torque()[i]);
+                pid_torque[i].setGains(valve_gains_sign[i]*ref_msg.kp_torque()[i], valve_gains_sign[i]*ref_msg.ki_torque()[i], valve_gains_sign[i]*ref_msg.kd_torque()[i]);
                 pid_position[i].setGains(ref_msg.kp_position()[i], ref_msg.ki_position()[i], ref_msg.kd_position()[i]);
             }
 
@@ -422,20 +422,22 @@ int main(int argc, char * const argv[])
                 // interpolate
                 for (auto &[ecat_id, rx_pdo] : valve_reference_map){
                     int ctrl_mode= ec_cfg.device_config_map[ecat_id].control_mode_type;
-
+                    int idx = ecat_to_hal_id[ecat_id];
                     if(ctrl_mode == iit::advr::Gains_Type_POSITION){
-                        std::get<1>(rx_pdo) = ref.position[ecat_to_hal_id[ecat_id]];
+                        // std::get<1>(rx_pdo) = ref.position[idx];
                     }else if(ctrl_mode == iit::advr::Gains_Type_IMPEDANCE){
-                        std::get<0>(rx_pdo) = ref.current_offset[ecat_to_hal_id[ecat_id]];
-                        std::get<2>(rx_pdo) = ref.torque[ecat_to_hal_id[ecat_id]];
+                        std::get<0>(rx_pdo) = ref.current_offset[idx];
+                        std::get<2>(rx_pdo) = ref.torque[idx];
+                        // set gains
+                        std::get<3>(rx_pdo) = valve_gains_sign[idx]*ref_msg.kp_torque()[idx];
+                        std::get<4>(rx_pdo) = valve_gains_sign[idx]*ref_msg.ki_torque()[idx];
+                        std::get<5>(rx_pdo) = valve_gains_sign[idx]*ref_msg.kd_torque()[idx];
+                        std::get<6>(rx_pdo) = ref_msg.torque_scale_factor()[idx];    // velocity compensation gain
                     }else{
-                        std::get<0>(rx_pdo) = ref.current[ecat_to_hal_id[ecat_id]] + ref.current_offset[ecat_to_hal_id[ecat_id]];
+                        // ref.current[idx] = pid_position[idx].run(ref.position[idx], state.joints_position[idx]) + ref.current_offset[idx];
+                        std::get<0>(rx_pdo) = ref.current[idx] + ref.current_offset[idx];
+                        // std::get<0>(rx_pdo) = pid_torque[idx].run(ref.torque[idx], state.joints_torques[idx])+ ref.current_offset[idx];
                     }
-                    // set gains
-                    std::get<3>(rx_pdo) = valve_gains_sign[ecat_to_hal_id[ecat_id]]*ref_msg.kp_torque()[ecat_to_hal_id[ecat_id]];
-                    std::get<4>(rx_pdo) = valve_gains_sign[ecat_to_hal_id[ecat_id]]*ref_msg.ki_torque()[ecat_to_hal_id[ecat_id]];
-                    std::get<5>(rx_pdo) = valve_gains_sign[ecat_to_hal_id[ecat_id]]*ref_msg.kd_torque()[ecat_to_hal_id[ecat_id]];
-                    std::get<6>(rx_pdo) = ref_msg.torque_scale_factor()[ecat_to_hal_id[ecat_id]];    // velocity compensation gain
                 }
                 // ************************* SEND ALWAYS REFERENCES***********************************//
                 client->set_valve_reference(valve_reference_map);
